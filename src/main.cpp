@@ -1,11 +1,17 @@
 #include <iostream>
-#include <bits/stdc++.h>
+#include <vector>
+#include <sstream>
 #include "../include/color.hpp"
 
 bool is_initialized = false;
 
 void ParseCommand(std::string& command, std::vector<std::string>& args, const std::string& input) {
-    command = input.substr(0, input.find(' '));
+    if (input.find(' ') == std::string::npos) {
+        command = input;
+    } else {
+        command = input.substr(0, input.find(' '));
+    }
+
     if(input.find(" ") == std::string::npos) {
         return;
     }
@@ -18,10 +24,10 @@ void ParseCommand(std::string& command, std::vector<std::string>& args, const st
 }
 
 bool IsValidCommand(std::string const& command) {
-    std::string const valid_commands[] = {"exit", "clear", "initialize", "screen", "scheduler-test", "scheduler-stop", "report-util"};
+    std::string const valid_commands[7] = {"exit", "clear", "initialize", "screen", "scheduler-test", "scheduler-stop", "report-util"};
 
-    for(int i = 0; i < valid_commands->length(); i++) {
-        if(valid_commands[i] == command) {
+    for(auto c: valid_commands) {
+        if(c == command) {
             return true;
         }
     }
@@ -66,7 +72,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
         std::cout << "scheduler-stop command recognized. Doing something.\n";
     }
     if (command == "report-util") {
-        std::cout << "scheduler-util command recognized. Doing something.\n";
+        std::cout << "report-util command recognized. Doing something.\n";
     }
 }
 
