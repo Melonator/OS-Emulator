@@ -1,10 +1,19 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <ctime>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
 #include "../include/color.hpp"
+#include "../include/process.h"
+bool is_initialized = true; // make false later
+bool isMainInputActive = true; // Controls if the main input is active
+std::mutex mtx;
+std::condition_variable cv;
 
-bool is_initialized = false;
-
+void run(std::vector<process::Process>* processes);
 void ParseCommand(std::string& command, std::vector<std::string>& args, const std::string& input) {
     if (input.find(' ') == std::string::npos) {
         command = input;
@@ -35,7 +44,20 @@ bool IsValidCommand(std::string const& command) {
     return false;
 }
 
-void ProcessCommand(std::string const& command, const std::vector<std::string>&  args) {
+void processThread(const std::string &name, const std::string &timestamp, std::vector<process::Process>* processes) {
+
+    isMainInputActive = false; // Disable main input
+    cv.notify_all();
+
+    process::Process p(name, timestamp);
+    processes->push_back(p);
+    p.show();
+
+    isMainInputActive = true; // Re-enable main input
+    cv.notify_all();
+}
+
+void ProcessCommand(std::string const& command, const std::vector<std::string>&  args, std::vector<process::Process>* processes) {
     if (command == "exit") {
         exit(0);
     }
@@ -59,19 +81,73 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
     }
 
     if(command == "screen") {
-        if(args.size() > 0) {
-            std::cout << dye::aqua("Arguments detected\n");
-        }
-
         std::cout << "screen command recognized. Doing something.\n";
+        if(args.size() > 0) {
+            if (args.at(0) == "-s") {
+                // new screen
+                if (args.size() > 2) {
+                    std::cout << dye::red("Too many arguments\n");
+                    return;
+                }
+                std::string name = args.at(1);
+                for (int i = 0; i < processes->size(); i++) {
+                    if (processes->at(i).getName() == name) {
+                        std::cout << dye::red("Screen already exists\n");
+                        mtx.unlock();
+                        // if (mtx.try_lock()) {
+                        //     mtx.lock();
+                        // }
+                        return;
+                    }
+                }
+
+                const time_t timestamp = time(NULL);
+                struct tm datetime = *localtime(&timestamp);
+                char output[50];
+                strftime(output, 50, "%m/%d/%G, %H:%M:%S %p", &datetime);
+                std::cout << output;
+                // fix strftime output currently broken
+                for (int i = 0; i < 49; i++) {
+                    if (output[i] == '\0')
+                        output[i] = ' ';
+                }
+                const std::string timestampStr = output;
+
+                std::thread t(processThread, name, timestampStr, processes);
+                t.detach();
+            } else if (args.at(0) == "-r") {
+                // reattach
+                if (args.size() > 2) {
+                    std::cout << dye::red("Too many arguments\n");
+                } else {
+                    std::string name = args.at(1);
+                    for (int i = 0; i < processes->size(); i++) {
+                        if (processes->at(i).getName() == name) {
+                            // do stuff
+                            isMainInputActive = false; // disable main input
+                            cv.notify_all();
+                            processes->at(i).show();
+                            break;
+                        }
+                    }
+                }
+            } else if (args.at(0) == "-ls") {
+                // list all
+            } else {
+                std::cout << dye::red("Invalid argument\n");
+            }
+        }
+        else {
+            std::cout << dye::red("No arguments detected\n");
+        }
     }
-    if (command == "scheduler-test") {
+    else if (command == "scheduler-test") {
         std::cout << "scheduler-test command recognized. Doing something.\n";
     }
-    if (command == "scheduler-stop") {
+    else if (command == "scheduler-stop") {
         std::cout << "scheduler-stop command recognized. Doing something.\n";
     }
-    if (command == "report-util") {
+    else if (command == "report-util") {
         std::cout << "report-util command recognized. Doing something.\n";
     }
 }
@@ -85,31 +161,54 @@ std::string GetCommand() {
     return input;
 }
 
-void Listen() {
+void Listen(std::vector<process::Process>* processes) {
     std::string input = "";
     std::string response = "";
     std::string command = "";
     std::vector<std::string> args;
-    while (input != "clear") {
+    while (true) {
+        if (!mtx.try_lock()) {
+            std::cout << "Mutex is already locked!\n";
+            mtx.unlock();
+            // break; // Or add a break to avoid infinite loop
+        }
+        std::cout << "Mutex acquired by main thread\n";
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [] { return isMainInputActive; });
+        // mtx.unlock(); // Explicit unlock for try_lock case
+
+        std::cout << "Main thread input unlocked\n";
         input = GetCommand();
         ParseCommand(command, args, input); //get command and its arguments
         if(!IsValidCommand(command)) {
-            std::cout << dye::red("Unknown Command\n\n");
+            std::cout << "Unknown Command\n\n";
+            isMainInputActive = true; // Re-enable main input
+            cv.notify_all();
+            // cv.notify_all();
             continue;
         }
-        ProcessCommand(command, args);
+        ProcessCommand(command, args, processes);
         args.clear();
         std::cout << "\n";
+        if (mtx.try_lock()) {
+            std::cout << "Pumasok dito\n";
+            continue;
+            // mtx.unlock();
+        }
+        if (!mtx.try_lock()) {
+            mtx.unlock();
+        }
     }
 }
 
-int main() {
-    system("cls");
-    std::string input = "";
+void run(std::vector<process::Process>* processes) {
     while (true) {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [] { return isMainInputActive; }); // Wait until main input is active
+
         system("cls");
         std::cout <<
- R"( _____  _____  ___________ _____ _______   __
+                R"( _____  _____  ___________ _____ _______   __
 /  __ \/  ___||  _  | ___ \  ___/  ___\ \ / /
 | /  \/\ `--. | | | | |_/ / |__ \ `--. \ V /
 | |     `--. \| | | |  __/|  __| `--. \ \ /
@@ -120,6 +219,17 @@ int main() {
 
         std::cout << dye::green("Hello, Welcome to the CSOPESY commandline!\n");
         std::cout << dye::yellow("Type 'exit' to quit, 'clear' to clear the screen\n");
-        Listen();
+
+        // Start listening for input commands
+        Listen(processes);
     }
+}
+
+
+int main() {
+    time_t timestamp = time(NULL);
+    system("cls");
+    std::string input = "";
+    std::vector<process::Process>* processes = new std::vector<process::Process>();
+    run(processes);
 }
