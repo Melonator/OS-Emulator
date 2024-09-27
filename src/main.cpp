@@ -78,7 +78,6 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
         return;
     }
     if(command == "initialize") {
-
         if(is_initialized) {
             std::cout << dye::red("Already initialized\n");
             return;
@@ -119,7 +118,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                 const time_t timestamp = time(NULL);
                 struct tm datetime = *localtime(&timestamp);
                 char output[50] = "";
-                strftime(output, 50, "%m/%d/%G, %H:%M:%S %p", &datetime);
+                strftime(output, 50, "%m/%d/%Y, %I:%M:%S %p", &datetime);
                 std::cout << output;
                 const std::string timestampStr = output;
                 error = false;
