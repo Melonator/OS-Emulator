@@ -91,9 +91,9 @@ using namespace process;
     void Process::ProcessCommand(std::string const& command, const std::vector<std::string>&  args) {
         if (command == "exit") {
             this->hide();
-            if (!mtx.try_lock()) {
+            // if (!mtx.try_lock()) {
                 mtx.unlock();
-            }
+            // }
             std::unique_lock<std::mutex> lock(mtx);
             isMainInputActive = true; // Re-enable main input
             cv.notify_all(); // Notify the main thread
