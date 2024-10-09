@@ -5,10 +5,10 @@ set(CMAKE_CXX_STANDARD 20)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++ -static-libgcc -static")
 
 add_executable(OS_Emualtor src/main.cpp
-        include/process.h
+        include/screen.h
         include/cpu.h
         include/scheduler.h
-        src/process.cpp
+        src/screen.cpp
         src/scheduler.cpp
         src/cpu.cpp
         include/shared_state.h

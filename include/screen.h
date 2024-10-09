@@ -2,21 +2,21 @@
 #define PROCESS_H
 #include <string>
 #include <vector>
-namespace process {
-    class Process {
+namespace screen {
+    class Screen {
     public:
-        Process(std::string name, std::string timestamp);
-        Process();
+        Screen(std::string name, std::string timestamp);
+        Screen();
         std::string getName();
         void hide();
         void show();
+        void run();
 
     private:
         std::string name;
         std::string timestamp;
         int currLine;
         bool isVisible;
-        void run();
 
         std::string GetCommand();
         void ParseCommand(std::string& command, std::vector<std::string>& args, std::string input);

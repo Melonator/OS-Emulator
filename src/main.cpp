@@ -7,14 +7,14 @@
 #include <condition_variable>
 
 #include "../include/color.hpp"
-#include "../include/process.h"
+#include "../include/screen.h"
 bool is_initialized = true; // make false later
 bool isMainInputActive = true; // Controls if the main input is active
 bool error = false;
 std::mutex mtx;
 std::condition_variable cv;
 
-void run(std::vector<process::Process>* processes);
+void run(std::vector<std::shared_ptr<screen::Screen>>* processes);
 void display();
 void ParseCommand(std::string& command, std::vector<std::string>& args, const std::string& input) {
     if (input.find(' ') == std::string::npos) {
@@ -46,29 +46,31 @@ bool IsValidCommand(std::string const& command) {
     return false;
 }
 
-void processThread(const std::string &name, const std::string &timestamp, std::vector<process::Process>* processes) {
+void processThread(const std::string &name, const std::string &timestamp, std::vector<std::shared_ptr<screen::Screen>>* processes) {
 
     isMainInputActive = false; // Disable main input
     cv.notify_all();
 
-    process::Process p(name, timestamp);
+    std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name, timestamp);
     processes->push_back(p);
-    p.show();
+    p->show();
+    p->run();
 
     isMainInputActive = true; // Re-enable main input
     cv.notify_all();
 }
 
-void reattachThread(process::Process p) {
+void reattachThread(std::shared_ptr<screen::Screen> p) {
     isMainInputActive = false;
     cv.notify_all();
-    p.show();
+    p->show();
 
-    isMainInputActive = true;
-    cv.notify_all();
+    // std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // isMainInputActive = true;
+    // cv.notify_all();
 }
 
-void ProcessCommand(std::string const& command, const std::vector<std::string>&  args, std::vector<process::Process>* processes) {
+void ProcessCommand(std::string const& command, const std::vector<std::string>&  args, std::vector<std::shared_ptr<screen::Screen>>* processes) {
     if (command == "exit") {
         exit(0);
     }
@@ -104,7 +106,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                 }
                 std::string name = args.at(1);
                 for (int i = 0; i < processes->size(); i++) {
-                    if (processes->at(i).getName() == name) {
+                    if (processes->at(i)->getName() == name) {
                         std::cout << dye::red("Screen already exists\n");
                         error = true;
                         // mtx.unlock();
@@ -134,15 +136,16 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                     std::string name = args.at(1);
                     bool found = false;
                     for (int i = 0; i < processes->size(); i++) {
-                        if (processes->at(i).getName() == name) {
+                        if (processes->at(i)->getName() == name) {
                             // do stuff
                             found = true;
                             isMainInputActive = false; // disable main input
                             error = false;
                             cv.notify_all();
-                            std::thread t(reattachThread, processes->at(i));
-                            t.detach();
-                            // processes->at(i).show();
+
+                            // std::thread t(reattachThread, processes->at(i));
+                            // t.detach();
+                            processes->at(i)->show();
 
                             break;
                         }
@@ -201,7 +204,7 @@ void display() {
     std::cout << dye::yellow("Type 'exit' to quit, 'clear' to clear the screen\n");
 }
 
-void Listen(std::vector<process::Process>* processes) {
+void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     std::string input = "";
     std::string response = "";
     std::string command = "";
@@ -222,7 +225,7 @@ void Listen(std::vector<process::Process>* processes) {
         input = GetCommand();
         ParseCommand(command, args, input); //get command and its arguments
         if(!IsValidCommand(command)) {
-            std::cout << "Unknown Command\n\n";
+            std::cout << "Unknown Command main\n\n";
             isMainInputActive = true; // Re-enable main input
             error = true;
             cv.notify_all();
@@ -235,7 +238,7 @@ void Listen(std::vector<process::Process>* processes) {
     // }
 }
 
-void run(std::vector<process::Process>* processes) {
+void run(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     std::unique_lock<std::mutex> lock(mtx);
 
     while (true) {
@@ -254,6 +257,6 @@ void run(std::vector<process::Process>* processes) {
 int main() {
     system("cls");
     std::string input = "";
-    std::vector<process::Process>* processes = new std::vector<process::Process>();
+    std::vector<std::shared_ptr<screen::Screen>>* processes = new std::vector<std::shared_ptr<screen::Screen>>();
     run(processes);
 }

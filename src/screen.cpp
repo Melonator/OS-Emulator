@@ -1,41 +1,43 @@
-#include "../include/process.h"
+#include "../include/screen.h"
 
 #include <condition_variable>
 #include <iostream>
 #include <mutex>
-using namespace process;
+using namespace screen;
 
     // External variables for controlling input
     extern bool isMainInputActive;
     extern std::mutex mtx;
     extern std::condition_variable cv;
 
-    Process::Process() {
+    Screen::Screen() {
         this->name = "";
         this->timestamp = "";
         this->currLine = 0;
         this->isVisible = false;
     }
-    Process::Process(const std::string name, const std::string timestamp) {
+    Screen::Screen(const std::string name, const std::string timestamp) {
         this->name = name;
         this->timestamp = timestamp;
         this->currLine = 0;
         this->isVisible = true;
     }
-    std::string Process::getName() {
+    std::string Screen::getName() {
         return this->name;
     }
 
-    void Process::hide() {
+    void Screen::hide() {
         this->isVisible = false;
     }
 
-    void Process::show() {
+    void Screen::show() {
         this->isVisible = true;
-        this->run();
+        // this->run();
+        system("cls");
+        // system("cls");
     }
 
-    void Process::run() {
+    void Screen::run() {
         system("cls");
         system("cls");
         while (true) {
@@ -44,12 +46,14 @@ using namespace process;
                 std::cout << "Current instruction line: " << this->currLine << "\n";
                 std::cout << "Timestamp: " << this->timestamp << "\n";
                 this->Listen();
-                break; // Exit loop after listening to detach
+                // break; // Exit loop after listening to detach
             }
+            currLine++;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 
-    std::string Process::GetCommand() {
+    std::string Screen::GetCommand() {
         std::string input = "";
 
         std::cout << "Enter a command: ";
@@ -58,7 +62,7 @@ using namespace process;
         return input;
     }
 
-    void Process::ParseCommand(std::string& command, std::vector<std::string>& args, std::string input) {
+    void Screen::ParseCommand(std::string& command, std::vector<std::string>& args, std::string input) {
         std::string temp = "";
         for (int i = 0; i < input.length(); i++) {
             if (input[i] == ' ') {
@@ -81,15 +85,16 @@ using namespace process;
         args.push_back(temp);
     }
 
-    bool Process::IsValidCommand(std::string command) {
+    bool Screen::IsValidCommand(std::string command) {
         if (command == "exit" || command == "process-smi") {
             return true;
         }
         return false;
     }
 
-    void Process::ProcessCommand(std::string const& command, const std::vector<std::string>&  args) {
+    void Screen::ProcessCommand(std::string const& command, const std::vector<std::string>&  args) {
         if (command == "exit") {
+            std::cout << "Exit screen " << this->getName() << "\n";
             this->hide();
             // if (!mtx.try_lock()) {
                 mtx.unlock();
@@ -102,20 +107,21 @@ using namespace process;
             std::cout << "Process SMI command recognized. Doing something.\n";
         }
     }
-    void Process::Listen() {
+    void Screen::Listen() {
         std::string input = "";
         std::string response = "";
         std::string command = "";
         std::vector<std::string> args;
-        while (input != "clear" && input != "exit") {
+        while (!this->IsValidCommand(command)) {
             input = this->GetCommand();
             this->ParseCommand(command, args, input); //get command and its arguments
             if(!this->IsValidCommand(command)) {
-                std::cout << "Unknown Command\n\n";
-                continue;
+                std::cout << "Unknown Command screen " << this->getName() << "\n\n";
             }
-            this->ProcessCommand(command, args);
-            args.clear();
-            std::cout << "\n";
+            else {
+                this->ProcessCommand(command, args);
+                args.clear();
+                std::cout << "\n";
+            }
         }
     }
