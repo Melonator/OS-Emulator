@@ -46,12 +46,12 @@ bool IsValidCommand(std::string const& command) {
     return false;
 }
 
-void processThread(const std::string &name, const std::string &timestamp, std::vector<std::shared_ptr<screen::Screen>>* processes) {
+void processThread(const std::string &name, std::vector<std::shared_ptr<screen::Screen>>* processes) {
 
     isMainInputActive = false; // Disable main input
     cv.notify_all();
 
-    std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name, timestamp);
+    std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name);
     processes->push_back(p);
     p->show();
     p->run();
@@ -117,14 +117,14 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                     }
                 }
 
-                const time_t timestamp = time(NULL);
-                struct tm datetime = *localtime(&timestamp);
-                char output[50] = "";
-                strftime(output, 50, "%m/%d/%Y, %I:%M:%S %p", &datetime);
-                std::cout << output;
-                const std::string timestampStr = output;
+                // const time_t timestamp = time(NULL);
+                // struct tm datetime = *localtime(&timestamp);
+                // char output[50] = "";
+                // strftime(output, 50, "%m/%d/%Y, %I:%M:%S %p", &datetime);
+                // std::cout << output;
+                // const std::string timestampStr = output;
                 error = false;
-                std::thread t(processThread, name, timestampStr, processes);
+                std::thread t(processThread, name, processes);
                 t.detach();
 
             } else if (args.at(0) == "-r") {

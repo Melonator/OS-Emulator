@@ -5,7 +5,7 @@
 namespace screen {
     class Screen {
     public:
-        Screen(std::string name, std::string timestamp);
+        Screen(std::string name);
         Screen();
         std::string getName();
         void hide();

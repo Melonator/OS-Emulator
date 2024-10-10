@@ -3,6 +3,7 @@
 #include <condition_variable>
 #include <iostream>
 #include <mutex>
+#include <ctime>
 using namespace screen;
 
     // External variables for controlling input
@@ -10,15 +11,17 @@ using namespace screen;
     extern std::mutex mtx;
     extern std::condition_variable cv;
 
+    std::string timestampFormat();
+
     Screen::Screen() {
         this->name = "";
         this->timestamp = "";
         this->currLine = 0;
         this->isVisible = false;
     }
-    Screen::Screen(const std::string name, const std::string timestamp) {
+    Screen::Screen(const std::string name) {
         this->name = name;
-        this->timestamp = timestamp;
+        this->timestamp = timestampFormat();
         this->currLine = 0;
         this->isVisible = true;
     }
@@ -124,4 +127,13 @@ using namespace screen;
                 std::cout << "\n";
             }
         }
+    }
+
+    std::string timestampFormat() {
+        const time_t timestamp = time(NULL);
+        struct tm datetime = *localtime(&timestamp);
+        char output[50] = "";
+        strftime(output, 50, "%m/%d/%Y, %I:%M:%S %p", &datetime);
+        const std::string timestampStr = output;
+        return timestampStr;
     }
