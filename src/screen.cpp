@@ -4,6 +4,7 @@
 #include <iostream>
 #include <mutex>
 #include <ctime>
+#include <fstream>
 using namespace screen;
 
     // External variables for controlling input
@@ -17,12 +18,18 @@ using namespace screen;
         this->name = "";
         this->timestamp = "";
         this->currLine = 0;
+        this->maxLine = 0;
+        this->state = ProcessState::READY;
+        this->currCore = -1;
         this->isVisible = false;
     }
     Screen::Screen(const std::string name) {
         this->name = name;
         this->timestamp = timestampFormat();
         this->currLine = 0;
+        this->maxLine = 100;
+        this->state = ProcessState::READY;
+        this->currCore = -1;
         this->isVisible = true;
     }
     std::string Screen::getName() {
@@ -44,9 +51,9 @@ using namespace screen;
         system("cls");
         system("cls");
         while (true) {
-            if (this->isVisible) {
+            if (isVisible) {
                 std::cout << "Process: " << this->name << "\n";
-                std::cout << "Current instruction line: " << this->currLine << "\n";
+                std::cout << "Current instruction line: " << this->currLine << " / " << this->maxLine << "\n";
                 std::cout << "Timestamp: " << this->timestamp << "\n";
                 this->Listen();
                 // break; // Exit loop after listening to detach
@@ -129,6 +136,24 @@ using namespace screen;
         }
     }
 
+    void Screen::print() {
+        // output to log file
+        std::ofstream logFile;
+        std::string fileName = name + "_log.txt";
+        logFile.open(fileName, std::ios_base::app);
+        state = ProcessState::RUNNING;
+        for (int i = currLine; i < maxLine; i++) {
+            std::string timestamp = timestampFormat();
+            logFile << "(" << timestamp << ") " << "Core:" << currCore << " \"Hello world from " << name << "!\"\n";
+            currLine++;
+        }
+        logFile.close();
+        state = ProcessState::TERMINATED;
+    }
+
+    void Screen::setCore(int core) {
+        this->currCore = core;
+    }
     std::string timestampFormat() {
         const time_t timestamp = time(NULL);
         struct tm datetime = *localtime(&timestamp);
@@ -136,4 +161,12 @@ using namespace screen;
         strftime(output, 50, "%m/%d/%Y, %I:%M:%S %p", &datetime);
         const std::string timestampStr = output;
         return timestampStr;
+    }
+
+    int Screen::getCurrLine() const {
+        return this->currLine;
+    }
+
+    int Screen::getMaxLine() const {
+        return this->maxLine;
     }

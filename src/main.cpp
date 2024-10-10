@@ -1,14 +1,15 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <ctime>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 
 #include "../include/color.hpp"
 #include "../include/screen.h"
-bool is_initialized = true; // make false later
+#include "../include/scheduler.h"
+
+bool is_initialized = false; // make false later
 bool isMainInputActive = true; // Controls if the main input is active
 bool error = false;
 std::mutex mtx;
@@ -70,7 +71,11 @@ void reattachThread(std::shared_ptr<screen::Screen> p) {
     // cv.notify_all();
 }
 
-void ProcessCommand(std::string const& command, const std::vector<std::string>&  args, std::vector<std::shared_ptr<screen::Screen>>* processes) {
+void schedulerThread(std::shared_ptr<scheduler::Scheduler> sched) {
+    sched->run();
+}
+
+void ProcessCommand(std::string const& command, const std::vector<std::string>&  args, std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler> sched) {
     if (command == "exit") {
         exit(0);
     }
@@ -85,7 +90,16 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
             return;
         }
         std::cout << "Initialize command recognized. Doing something.\n";
+        sched = std::make_shared<scheduler::Scheduler>();
+        for (int i = 0; i < 10; i++) {
+            std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>("screen_" + std::to_string(i));
+            processes->push_back(p);
+            sched->addProcess(p);
+        }
+        std::thread t(schedulerThread, sched);
+        t.detach();
         is_initialized = true;
+        error = true;
         return;
     }
 
@@ -204,7 +218,7 @@ void display() {
     std::cout << dye::yellow("Type 'exit' to quit, 'clear' to clear the screen\n");
 }
 
-void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes) {
+void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler>* sched) {
     std::string input = "";
     std::string response = "";
     std::string command = "";
@@ -232,13 +246,13 @@ void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes) {
             return;
             // cv.notify_all();
         }
-        ProcessCommand(command, args, processes);
+        ProcessCommand(command, args, processes, *sched);
         args.clear();
         std::cout << "\n";
     // }
 }
 
-void run(std::vector<std::shared_ptr<screen::Screen>>* processes) {
+void run(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler>* sched) {
     std::unique_lock<std::mutex> lock(mtx);
 
     while (true) {
@@ -249,7 +263,7 @@ void run(std::vector<std::shared_ptr<screen::Screen>>* processes) {
             cv.wait(lock, [] { return isMainInputActive; });
         }
         // Start listening for input commands
-        Listen(processes);
+        Listen(processes, sched);
     }
 }
 
@@ -258,5 +272,6 @@ int main() {
     system("cls");
     std::string input = "";
     std::vector<std::shared_ptr<screen::Screen>>* processes = new std::vector<std::shared_ptr<screen::Screen>>();
-    run(processes);
+    std::shared_ptr<scheduler::Scheduler>* sched;
+    run(processes, sched);
 }
