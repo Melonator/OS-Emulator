@@ -144,6 +144,8 @@ using namespace screen;
         std::string fileName = name + "_log.txt";
         logFile.open(fileName, std::ios_base::app);
         state = ProcessState::RUNNING;
+
+        // perform print command for n amount of times
         for (int i = currLine; i < maxLine; i++) {
             std::string timestamp = timestampFormat();
             logFile << "(" << timestamp << ") " << "Core:" << currCore << " \"Hello world from " << name << "!\"\n";
