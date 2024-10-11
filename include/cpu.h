@@ -26,16 +26,12 @@ namespace cpu {
     class CPU {
     private:
       std::vector<std::shared_ptr<Core>> cores;
-      std::vector<std::shared_ptr<screen::Screen>> running;
-      std::vector<std::shared_ptr<screen::Screen>> finished;
       int numCores;
 
   public:
         explicit CPU(int numCores);
         int getNumCores() const;
         std::vector<std::shared_ptr<Core>> getCores() const;
-        void addFinished(std::shared_ptr<screen::Screen> s);
-        void addRunning(std::shared_ptr<screen::Screen> s);
     };
 
 }

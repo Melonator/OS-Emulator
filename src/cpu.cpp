@@ -11,8 +11,6 @@ CPU::CPU(int numCores) {
     //Logic for initializing threads and other stuff
     // std::cout << "I have " << numCores << " core(s)!\n";
     this->numCores = numCores;
-    this->running = std::vector<std::shared_ptr<screen::Screen>>();
-    this->finished = std::vector<std::shared_ptr<screen::Screen>>();
     for (int i = 0; i < numCores; i++) {
         std::shared_ptr<Core> core = std::make_shared<Core>(i);
         std::thread t(coreThread, core);
@@ -27,10 +25,6 @@ int CPU::getNumCores() const {
 
 std::vector<std::shared_ptr<Core>> CPU::getCores() const {
     return this->cores;
-}
-
-void CPU::addRunning(std::shared_ptr<screen::Screen> s) {
-    this->running.push_back(s);
 }
 
 
@@ -54,7 +48,7 @@ void Core::work() {
             this->state = CoreState::BUSY;
             currScreen->setCore(id);
             currScreen->print();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             // std::cout << "CPU " << id << " finished work on " << currScreen->getName() << "\n";
             currScreen->setCore(-1);
             currScreen = nullptr;

@@ -22,6 +22,7 @@ namespace screen {
         void setCore(int core);
         int getCurrLine() const;
         int getMaxLine() const;
+        std::string toString();
     private:
         std::string name;
         std::string timestamp;

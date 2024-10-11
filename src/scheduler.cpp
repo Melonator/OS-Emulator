@@ -7,6 +7,8 @@ using namespace scheduler;
 Scheduler::Scheduler(): cpu(4) {
     // this->cpu = cpu::CPU(4);
     this->ready = new std::vector<std::shared_ptr<screen::Screen>>();
+    this->running = std::vector<std::shared_ptr<screen::Screen>>();
+    this->finished = std::vector<std::shared_ptr<screen::Screen>>();
 }
 
 void Scheduler::run() {
@@ -24,7 +26,7 @@ void Scheduler::run() {
                         process = ready->front();
                         ready->erase(ready->begin());
                         core->setScreen(process);
-                        cpu.addRunning(process);
+                        addRunning(process);
                     } catch (const std::exception& e) {
                         std::cout << e.what() << std::endl;
                     }
@@ -38,4 +40,8 @@ void Scheduler::run() {
 void Scheduler::addProcess(const std::shared_ptr<screen::Screen> &process) {
     // Logic for adding process to queue
     this->ready->push_back(process);
+}
+
+void Scheduler::addRunning(std::shared_ptr<screen::Screen> s) {
+    this->running.push_back(s);
 }

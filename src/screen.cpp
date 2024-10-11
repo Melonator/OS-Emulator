@@ -58,8 +58,8 @@ using namespace screen;
                 this->Listen();
                 // break; // Exit loop after listening to detach
             }
-            currLine++;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // currLine++;
+            // std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 
@@ -145,6 +145,7 @@ using namespace screen;
         for (int i = currLine; i < maxLine; i++) {
             std::string timestamp = timestampFormat();
             logFile << "(" << timestamp << ") " << "Core:" << currCore << " \"Hello world from " << name << "!\"\n";
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             currLine++;
         }
         logFile.close();
@@ -169,4 +170,16 @@ using namespace screen;
 
     int Screen::getMaxLine() const {
         return this->maxLine;
+    }
+
+    std::string Screen::toString() {
+        std::string stateStr = "";
+        if (currCore == -1 && state == ProcessState::TERMINATED)
+            stateStr = "Finished";
+        else if (currCore == -1 && state == ProcessState::READY)
+            stateStr = "Ready";
+        else
+            stateStr = "Core: " + std::to_string(currCore);
+
+        return name + "   (" + timestamp + ")   " + stateStr + "   " + std::to_string(currLine) + " / " + std::to_string(maxLine);
     }

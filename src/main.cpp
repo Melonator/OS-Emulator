@@ -11,7 +11,7 @@
 
 bool is_initialized = false; // make false later
 bool isMainInputActive = true; // Controls if the main input is active
-bool error = false;
+bool sameScreen = false;
 std::mutex mtx;
 std::condition_variable cv;
 
@@ -80,7 +80,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
         exit(0);
     }
     if (command == "clear") {
-        error = true;
+        sameScreen = true;
         display();
         return;
     }
@@ -99,7 +99,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
         std::thread t(schedulerThread, sched);
         t.detach();
         is_initialized = true;
-        error = true;
+        sameScreen = true;
         return;
     }
 
@@ -115,14 +115,14 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                 // new screen
                 if (args.size() > 2) {
                     std::cout << dye::red("Too many arguments\n");
-                    error = true;
+                    sameScreen = true;
                     return;
                 }
                 std::string name = args.at(1);
                 for (int i = 0; i < processes->size(); i++) {
                     if (processes->at(i)->getName() == name) {
                         std::cout << dye::red("Screen already exists\n");
-                        error = true;
+                        sameScreen = true;
                         // mtx.unlock();
                         // if (mtx.try_lock()) {
                         //     mtx.lock();
@@ -137,7 +137,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                 // strftime(output, 50, "%m/%d/%Y, %I:%M:%S %p", &datetime);
                 // std::cout << output;
                 // const std::string timestampStr = output;
-                error = false;
+                sameScreen = false;
                 std::thread t(processThread, name, processes);
                 t.detach();
 
@@ -145,7 +145,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                 // reattach
                 if (args.size() > 2) {
                     std::cout << dye::red("Too many arguments\n");
-                    error = true;
+                    sameScreen = true;
                 } else {
                     std::string name = args.at(1);
                     bool found = false;
@@ -154,7 +154,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                             // do stuff
                             found = true;
                             isMainInputActive = false; // disable main input
-                            error = false;
+                            sameScreen = false;
                             cv.notify_all();
 
                             // std::thread t(reattachThread, processes->at(i));
@@ -167,19 +167,28 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                     if (!found) {
                         std::cout << dye::red("Screen not found\n");
                         // mtx.unlock();
-                        error = true;
+                        sameScreen = true;
                     }
                 }
             } else if (args.at(0) == "-ls") {
                 // list all
+                if (args.size() > 1) {
+                    std::cout << dye::red("Too many arguments\n");
+                    sameScreen = true;
+                } else {
+                    for (int i = 0; i < processes->size(); i++) {
+                        std::cout << processes->at(i)->toString() << "\n";
+                    }
+                    sameScreen = true;
+                }
             } else {
                 std::cout << dye::red("Invalid argument\n");
-                error = true;
+                sameScreen = true;
             }
         }
         else {
             std::cout << dye::red("No arguments detected\n");
-            error = true;
+            sameScreen = true;
         }
     }
     else if (command == "scheduler-test") {
@@ -229,7 +238,7 @@ void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared
             mtx.unlock();
             // break; // Or add a break to avoid infinite loop
         }
-    if (!error) {
+    if (!sameScreen) {
         std::unique_lock<std::mutex> lock(mtx);
         display();
     }
@@ -241,7 +250,7 @@ void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared
         if(!IsValidCommand(command)) {
             std::cout << "Unknown Command main\n\n";
             isMainInputActive = true; // Re-enable main input
-            error = true;
+            sameScreen = true;
             cv.notify_all();
             return;
             // cv.notify_all();
@@ -256,9 +265,9 @@ void run(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_pt
     std::unique_lock<std::mutex> lock(mtx);
 
     while (true) {
-        if (error || !isMainInputActive)
+        if (sameScreen || !isMainInputActive)
             cv.wait(lock, [] { return isMainInputActive; }); // Wait until main input is active
-        else if (!error && isMainInputActive) {
+        else if (!sameScreen && isMainInputActive) {
             display();
             cv.wait(lock, [] { return isMainInputActive; });
         }
