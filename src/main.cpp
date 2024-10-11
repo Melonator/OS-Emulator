@@ -71,11 +71,11 @@ void reattachThread(std::shared_ptr<screen::Screen> p) {
     // cv.notify_all();
 }
 
-void schedulerThread(std::shared_ptr<scheduler::Scheduler> sched) {
+void schedulerThread(std::shared_ptr<scheduler::Scheduler>& sched) {
     sched->run();
 }
 
-void ProcessCommand(std::string const& command, const std::vector<std::string>&  args, std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler> sched) {
+void ProcessCommand(std::string const& command, const std::vector<std::string>&  args, std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler>& sched) {
     if (command == "exit") {
         exit(0);
     }
@@ -96,7 +96,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
             processes->push_back(p);
             sched->addProcess(p);
         }
-        std::thread t(schedulerThread, sched);
+        std::thread t(schedulerThread, std::ref(sched));
         t.detach();
         is_initialized = true;
         sameScreen = true;
@@ -176,9 +176,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                     std::cout << dye::red("Too many arguments\n");
                     sameScreen = true;
                 } else {
-                    for (int i = 0; i < processes->size(); i++) {
-                        std::cout << processes->at(i)->toString() << "\n";
-                    }
+                    sched->printList();
                     sameScreen = true;
                 }
             } else {
@@ -227,7 +225,7 @@ void display() {
     std::cout << dye::yellow("Type 'exit' to quit, 'clear' to clear the screen\n");
 }
 
-void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler>* sched) {
+void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler>& sched) {
     std::string input = "";
     std::string response = "";
     std::string command = "";
@@ -255,13 +253,13 @@ void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared
             return;
             // cv.notify_all();
         }
-        ProcessCommand(command, args, processes, *sched);
+        ProcessCommand(command, args, processes, sched);
         args.clear();
         std::cout << "\n";
     // }
 }
 
-void run(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler>* sched) {
+void run(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler>& sched) {
     std::unique_lock<std::mutex> lock(mtx);
 
     while (true) {
@@ -281,6 +279,6 @@ int main() {
     system("cls");
     std::string input = "";
     std::vector<std::shared_ptr<screen::Screen>>* processes = new std::vector<std::shared_ptr<screen::Screen>>();
-    std::shared_ptr<scheduler::Scheduler>* sched;
+    std::shared_ptr<scheduler::Scheduler> sched;
     run(processes, sched);
 }

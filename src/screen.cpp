@@ -21,6 +21,8 @@ using namespace screen;
         this->maxLine = 0;
         this->state = ProcessState::READY;
         this->currCore = -1;
+        this->startTime = "";
+        this->endTime = "";
         this->isVisible = false;
     }
     Screen::Screen(const std::string name) {
@@ -180,6 +182,18 @@ using namespace screen;
             stateStr = "Ready";
         else
             stateStr = "Core: " + std::to_string(currCore);
+        std::string time = "";
+        if (state == ProcessState::RUNNING)
+            time = startTime;
+        else if (state == ProcessState::TERMINATED)
+            time = endTime;
+        return name + "   (" + time + ")   " + stateStr + "   " + std::to_string(currLine) + " / " + std::to_string(maxLine);
+    }
 
-        return name + "   (" + timestamp + ")   " + stateStr + "   " + std::to_string(currLine) + " / " + std::to_string(maxLine);
+    void Screen::setStartTime() {
+        startTime = timestampFormat();
+    }
+
+    void Screen::setEndTime() {
+        endTime = timestampFormat();
     }

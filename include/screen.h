@@ -23,6 +23,8 @@ namespace screen {
         int getCurrLine() const;
         int getMaxLine() const;
         std::string toString();
+        void setStartTime();
+        void setEndTime();
     private:
         std::string name;
         std::string timestamp;
@@ -31,6 +33,8 @@ namespace screen {
         bool isVisible;
         ProcessState state;
         int currCore;
+        std::string startTime;
+        std::string endTime;
         std::string GetCommand();
         void ParseCommand(std::string& command, std::vector<std::string>& args, std::string input);
         bool IsValidCommand(std::string command);

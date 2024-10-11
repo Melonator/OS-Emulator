@@ -4,11 +4,11 @@
 #include <thread>
 using namespace scheduler;
 
-Scheduler::Scheduler(): cpu(4) {
-    // this->cpu = cpu::CPU(4);
+Scheduler::Scheduler() {
     this->ready = new std::vector<std::shared_ptr<screen::Screen>>();
-    this->running = std::vector<std::shared_ptr<screen::Screen>>();
-    this->finished = std::vector<std::shared_ptr<screen::Screen>>();
+    this->running = new std::vector<std::shared_ptr<screen::Screen>>();
+    this->finished = new std::vector<std::shared_ptr<screen::Screen>>();
+    this->cpu = cpu::CPU(4, this->running, this->finished);
 }
 
 void Scheduler::run() {
@@ -43,5 +43,27 @@ void Scheduler::addProcess(const std::shared_ptr<screen::Screen> &process) {
 }
 
 void Scheduler::addRunning(std::shared_ptr<screen::Screen> s) {
-    this->running.push_back(s);
+    this->running->push_back(s);
+}
+
+void Scheduler::printList() {
+    std::cout << "--------------------------\n";
+    std::cout << "Running processes:\n";
+    try {
+        for (int i = 0; i < this->running->size(); i++) {
+            std::cout << this->running->at(i)->toString() << "\n";
+        }
+    } catch (const std::exception& e) {
+        std::cout << e.what() << std::endl;
+    }
+
+    std::cout << "\nFinished processes:\n";
+    try {
+        for (int i = 0; i < this->finished->size(); i++) {
+            std::cout << this->finished->at(i)->toString() << "\n";
+        }
+    } catch (const std::exception& e) {
+        std::cout << e.what() << std::endl;
+    }
+    std::cout << "--------------------------\n";
 }
