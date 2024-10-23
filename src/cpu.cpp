@@ -11,12 +11,14 @@ CPU::CPU() {
 
 }
 
-CPU::CPU(int numCores, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
+CPU::CPU(int numCores, int quantum, const std::string &algorithm, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
     //Logic for initializing threads and other stuff
     // std::cout << "I have " << numCores << " core(s)!\n";
     this->numCores = numCores;
+    this->algorithm = algorithm;
+    this->quantum = quantum;
     for (int i = 0; i < numCores; i++) {
-        std::shared_ptr<Core> core = std::make_shared<Core>(i, running, finished);
+        std::shared_ptr<Core> core = std::make_shared<Core>(i, quantum, running, finished);
         std::thread t(coreThread, core);
         t.detach();
         this->cores.push_back(core);
@@ -38,12 +40,14 @@ Core::Core() {
     this->currScreen = nullptr;
 }
 
-Core::Core(int id, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
+Core::Core(int id, int quantum, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
     this->id = id;
     this->state = CoreState::IDLE;
     this->currScreen = nullptr;
     this->running = running;
     this->finished = finished;
+    this->quantum = quantum;
+    this->remainingQuantum = quantum - 1;
 }
 
 void Core::work() {

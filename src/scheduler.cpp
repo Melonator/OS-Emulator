@@ -1,14 +1,40 @@
 #include "../include/scheduler.h"
 
+#include <cstring>
+#include <fstream>
 #include <iostream>
 #include <thread>
 using namespace scheduler;
 
 Scheduler::Scheduler() {
+    // open config file
+    std::ifstream file;
+    file.open("../src/config.txt");
+    std::string line;
+    std::string configs[7];
+    int i = 0;
+    while (getline(file, line)) {
+        char *ptr = strtok(line.data(), " ");
+        ptr = strtok(NULL, " ");
+        configs[i] = ptr;
+        i++;
+    }
+    file.close();
+
+    int numCores = std::stoi(configs[0]);
+    std::string algorithm = configs[1].substr(1, configs[1].size() - 2);
+    int quantum = std::stoi(configs[2]);
+    int processFreq = std::stoi(configs[3]);
+    int minIns = std::stoi(configs[4]);
+    int maxIns = std::stoi(configs[5]);
+    int delay = std::stoi(configs[6]);
+    // std::cout << numCores << " " << algorithm << " " << quantum << " " << processFreq << " " << minIns << " " << maxIns << " " << delay << std::endl;
+    if (algorithm == "fcfs")
+        quantum = 0;
     this->ready = new std::vector<std::shared_ptr<screen::Screen>>();
     this->running = new std::vector<std::shared_ptr<screen::Screen>>();
     this->finished = new std::vector<std::shared_ptr<screen::Screen>>();
-    this->cpu = cpu::CPU(4, this->running, this->finished);
+    this->cpu = cpu::CPU(numCores, quantum, algorithm, this->running, this->finished);
 }
 
 void Scheduler::run() {
