@@ -25,6 +25,7 @@ namespace screen {
         std::string toString();
         void setStartTime();
         void setEndTime();
+        void processInfo() const;
     private:
         std::string name;
         std::string timestamp;

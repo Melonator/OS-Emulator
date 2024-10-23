@@ -38,6 +38,7 @@ Core::Core() {
     this->id = -1;
     this->state = CoreState::IDLE;
     this->currScreen = nullptr;
+    this->finishedCycle = false;
 }
 
 Core::Core(int id, int quantum, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
@@ -48,17 +49,20 @@ Core::Core(int id, int quantum, std::vector<std::shared_ptr<screen::Screen>>* ru
     this->finished = finished;
     this->quantum = quantum;
     this->remainingQuantum = quantum - 1;
+    this->finishedCycle = false;
 }
 
 void Core::work() {
     while (true) {
+        // change this to fit rr
         if (this->state == CoreState::IDLE && currScreen != nullptr) {
+            finishedCycle = false;
             // do stuff
             // std::cout << "CPU " << id << " doing work on " << currScreen->getName() << "\n";
             this->state = CoreState::BUSY;
             currScreen->setCore(id);
             currScreen->setStartTime();
-            currScreen->print();
+            currScreen->print(); // replace this line with the actual work
             currScreen->setEndTime();
             // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             // std::cout << "CPU " << id << " finished work on " << currScreen->getName() << "\n";
@@ -67,6 +71,7 @@ void Core::work() {
             addFinished(currScreen);
             currScreen = nullptr;
             this->state = CoreState::IDLE;
+            finishedCycle = true;
         }
         // break;
     }

@@ -47,13 +47,14 @@ bool IsValidCommand(std::string const& command) {
     return false;
 }
 
-void processThread(const std::string &name, std::vector<std::shared_ptr<screen::Screen>>* processes) {
+void processThread(const std::string &name, std::vector<std::shared_ptr<screen::Screen>>* processes, const std::shared_ptr<scheduler::Scheduler>& sched) {
 
     isMainInputActive = false; // Disable main input
     cv.notify_all();
 
     std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name);
     processes->push_back(p);
+    sched->addProcess(p);
     p->show();
     p->run();
 
@@ -139,7 +140,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                 // std::cout << output;
                 // const std::string timestampStr = output;
                 sameScreen = false;
-                std::thread t(processThread, name, processes);
+                std::thread t(processThread, name, processes, sched);
                 t.detach();
 
             } else if (args.at(0) == "-r") {
@@ -247,7 +248,7 @@ void Listen(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared
         input = GetCommand();
         ParseCommand(command, args, input); //get command and its arguments
         if(!IsValidCommand(command)) {
-            std::cout << "Unknown Command main\n\n";
+            std::cout << "Unknown Command\n\n";
             isMainInputActive = true; // Re-enable main input
             sameScreen = true;
             cv.notify_all();

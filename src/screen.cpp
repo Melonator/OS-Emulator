@@ -49,14 +49,18 @@ using namespace screen;
         // system("cls");
     }
 
+    void Screen::processInfo() const {
+        std::cout << "Process: " << this->name << "\n";
+        std::cout << "Current instruction line: " << this->currLine << " / " << this->maxLine << "\n";
+        std::cout << "Timestamp: " << this->timestamp << "\n";
+    }
+
     void Screen::run() {
         system("cls");
         system("cls");
         while (true) {
             if (isVisible) {
-                std::cout << "Process: " << this->name << "\n";
-                std::cout << "Current instruction line: " << this->currLine << " / " << this->maxLine << "\n";
-                std::cout << "Timestamp: " << this->timestamp << "\n";
+                processInfo();
                 this->Listen();
                 // break; // Exit loop after listening to detach
             }
@@ -128,7 +132,7 @@ using namespace screen;
             input = this->GetCommand();
             this->ParseCommand(command, args, input); //get command and its arguments
             if(!this->IsValidCommand(command)) {
-                std::cout << "Unknown Command screen " << this->getName() << "\n\n";
+                std::cout << "Unknown Command\n\n";
             }
             else {
                 this->ProcessCommand(command, args);

@@ -6,7 +6,8 @@
 
 enum class CoreState {
     IDLE,
-    BUSY
+    BUSY,
+    WAITING
 };
 namespace cpu {
     class Core {
@@ -15,6 +16,7 @@ namespace cpu {
         CoreState state;
         int quantum;
         int remainingQuantum;
+        bool finishedCycle;
         std::shared_ptr<screen::Screen> currScreen;
         std::vector<std::shared_ptr<screen::Screen>>* running;
         std::vector<std::shared_ptr<screen::Screen>>* finished;
