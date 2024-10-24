@@ -30,9 +30,9 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     int quantum = std::stoi(configs[2]);
     this->processes = processes;
     this->processFreq = std::stoi(configs[3]);
-    this->minIns = std::stoi(configs[4]);
-    this->maxIns = std::stoi(configs[5]);
-    this->delay = std::stoi(configs[6]);
+    this->minIns = std::stol(configs[4]);
+    this->maxIns = std::stol(configs[5]);
+    this->delay = std::stol(configs[6]);
     // std::cout << numCores << " " << algorithm << " " << quantum << " " << processFreq << " " << minIns << " " << maxIns << " " << delay << std::endl;
     if (algorithm == "fcfs")
         quantum = 0;
