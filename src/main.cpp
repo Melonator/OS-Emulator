@@ -92,11 +92,11 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
         }
         sched = std::make_shared<scheduler::Scheduler>();
         // 10 processes
-        // for (int i = 0; i < 10; i++) {
-        //     std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>("screen_" + std::to_string(i));
-        //     processes->push_back(p);
-        //     sched->addProcess(p);
-        // }
+        for (int i = 0; i < 10; i++) {
+            std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>("screen_" + std::to_string(i));
+            processes->push_back(p);
+            sched->addProcess(p);
+        }
         std::thread t(schedulerThread, std::ref(sched));
         t.detach();
         is_initialized = true;

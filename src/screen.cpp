@@ -44,7 +44,7 @@ using namespace screen;
 
     void Screen::show() {
         this->isVisible = true;
-        // system("cls");
+        system("cls");
         this->run();
         // system("cls");
     }
@@ -56,7 +56,6 @@ using namespace screen;
     }
 
     void Screen::run() {
-        system("cls");
         system("cls");
         while (true) {
             if (isVisible) {
