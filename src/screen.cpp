@@ -44,8 +44,8 @@ using namespace screen;
 
     void Screen::show() {
         this->isVisible = true;
-        // this->run();
-        system("cls");
+        // system("cls");
+        this->run();
         // system("cls");
     }
 
@@ -63,6 +63,9 @@ using namespace screen;
                 processInfo();
                 this->Listen();
                 // break; // Exit loop after listening to detach
+            }
+            else {
+                break;
             }
             // currLine++;
             // std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -120,7 +123,7 @@ using namespace screen;
             cv.notify_all(); // Notify the main thread
         }
         else if (command == "process-smi") {
-            std::cout << "Process SMI command recognized. Doing something.\n";
+            // std::cout << "Process SMI command recognized. Doing something.\n";
         }
     }
     void Screen::Listen() {

@@ -107,6 +107,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
 
     if(!is_initialized) {
         std::cout << dye::red("Please run the 'initialize' command first\n");
+        sameScreen = true;
         return;
     }
 
@@ -159,9 +160,9 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                             sameScreen = false;
                             cv.notify_all();
 
-                            // std::thread t(reattachThread, processes->at(i));
-                            // t.detach();
-                            processes->at(i)->show();
+                            std::thread t(reattachThread, processes->at(i));
+                            t.detach();
+                            // processes->at(i)->show();
 
                             break;
                         }
@@ -278,7 +279,7 @@ void run(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_pt
 
 
 int main() {
-    system("cls");
+    // system("cls");
     std::string input = "";
     std::vector<std::shared_ptr<screen::Screen>>* processes = new std::vector<std::shared_ptr<screen::Screen>>();
     std::shared_ptr<scheduler::Scheduler> sched;
