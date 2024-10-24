@@ -11,14 +11,14 @@ CPU::CPU() {
 
 }
 
-CPU::CPU(int numCores, int quantum, const std::string &algorithm, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
+CPU::CPU(int numCores, int quantum, const std::string &algorithm, std::vector<std::shared_ptr<screen::Screen>>* ready, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
     //Logic for initializing threads and other stuff
     // std::cout << "I have " << numCores << " core(s)!\n";
     this->numCores = numCores;
     this->algorithm = algorithm;
     this->quantum = quantum;
     for (int i = 0; i < numCores; i++) {
-        std::shared_ptr<Core> core = std::make_shared<Core>(i, quantum, running, finished);
+        std::shared_ptr<Core> core = std::make_shared<Core>(i, quantum, ready, running, finished);
         std::thread t(coreThread, core);
         t.detach();
         this->cores.push_back(core);
@@ -38,25 +38,23 @@ Core::Core() {
     this->id = -1;
     this->state = CoreState::IDLE;
     this->currScreen = nullptr;
-    this->finishedCycle = false;
 }
 
-Core::Core(int id, int quantum, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
+Core::Core(int id, int quantum, std::vector<std::shared_ptr<screen::Screen>>* ready, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
     this->id = id;
     this->state = CoreState::IDLE;
     this->currScreen = nullptr;
+    this->ready = ready;
     this->running = running;
     this->finished = finished;
     this->quantum = quantum;
     this->remainingQuantum = quantum - 1;
-    this->finishedCycle = false;
 }
 
 void Core::work() {
     while (true) {
         // change this to fit rr
         if (this->state == CoreState::IDLE && currScreen != nullptr) {
-            finishedCycle = false;
             // do stuff
             // std::cout << "CPU " << id << " doing work on " << currScreen->getName() << "\n";
             this->state = CoreState::BUSY;
@@ -71,7 +69,6 @@ void Core::work() {
             addFinished(currScreen);
             currScreen = nullptr;
             this->state = CoreState::IDLE;
-            finishedCycle = true;
         }
         // break;
     }

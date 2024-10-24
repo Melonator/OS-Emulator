@@ -7,6 +7,10 @@
 using namespace scheduler;
 
 Scheduler::Scheduler() {
+
+}
+
+Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     // open config file
     std::ifstream file;
     file.open("../src/config.txt");
@@ -24,22 +28,32 @@ Scheduler::Scheduler() {
     int numCores = std::stoi(configs[0]);
     std::string algorithm = configs[1].substr(1, configs[1].size() - 2);
     int quantum = std::stoi(configs[2]);
-    int processFreq = std::stoi(configs[3]);
-    int minIns = std::stoi(configs[4]);
-    int maxIns = std::stoi(configs[5]);
-    int delay = std::stoi(configs[6]);
+    this->processes = processes;
+    this->processFreq = std::stoi(configs[3]);
+    this->minIns = std::stoi(configs[4]);
+    this->maxIns = std::stoi(configs[5]);
+    this->delay = std::stoi(configs[6]);
     // std::cout << numCores << " " << algorithm << " " << quantum << " " << processFreq << " " << minIns << " " << maxIns << " " << delay << std::endl;
     if (algorithm == "fcfs")
         quantum = 0;
+    this->currCycle = 0;
+    this->processIndex = 0;
     this->ready = new std::vector<std::shared_ptr<screen::Screen>>();
     this->running = new std::vector<std::shared_ptr<screen::Screen>>();
     this->finished = new std::vector<std::shared_ptr<screen::Screen>>();
-    this->cpu = cpu::CPU(numCores, quantum, algorithm, this->running, this->finished);
+    this->cpu = cpu::CPU(numCores, quantum, algorithm, this->ready, this->running, this->finished);
+    this->generateProcess = false;
 }
 
 void Scheduler::run() {
     while (true) {
         // Logic for running processes
+        if (currCycle % processFreq == 0 && generateProcess) {
+            std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>("screen_" + std::to_string(processIndex));
+            processes->push_back(p);
+            addProcess(p);
+            processIndex++;
+        }
         for (int i = 0; i < cpu.getNumCores(); i++) {
         // if (this->ready->size() > 0) {
             // run processes
@@ -57,11 +71,21 @@ void Scheduler::run() {
                         std::cout << e.what() << std::endl;
                     }
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
+        currCycle++;
     }
 }
+
+void Scheduler::startTest() {
+    this->generateProcess = true;
+}
+
+void Scheduler::endTest() {
+    this->generateProcess = false;
+}
+
 
 void Scheduler::addProcess(const std::shared_ptr<screen::Screen> &process) {
     // Logic for adding process to queue
