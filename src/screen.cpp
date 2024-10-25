@@ -25,11 +25,11 @@ using namespace screen;
         this->endTime = "";
         this->isVisible = false;
     }
-    Screen::Screen(const std::string name) {
+    Screen::Screen(const std::string name, unsigned int maxLine) {
         this->name = name;
         this->timestamp = timestampFormat();
         this->currLine = 0;
-        this->maxLine = 100;
+        this->maxLine = maxLine;
         this->state = ProcessState::READY;
         this->currCore = -1;
         this->isVisible = true;
@@ -152,14 +152,13 @@ using namespace screen;
         state = ProcessState::RUNNING;
 
         // perform print command for n amount of times
-        for (int i = currLine; i < maxLine; i++) {
+        // for (int i = currLine; i < maxLine; i++) {
             std::string timestamp = timestampFormat();
             logFile << "(" << timestamp << ") " << "Core:" << currCore << " \"Hello world from " << name << "!\"\n";
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             currLine++;
-        }
+        // }
         logFile.close();
-        state = ProcessState::TERMINATED;
     }
 
     void Screen::setCore(int core) {
@@ -174,11 +173,11 @@ using namespace screen;
         return timestampStr;
     }
 
-    int Screen::getCurrLine() const {
+    unsigned int Screen::getCurrLine() const {
         return this->currLine;
     }
 
-    int Screen::getMaxLine() const {
+    unsigned int Screen::getMaxLine() const {
         return this->maxLine;
     }
 
@@ -191,10 +190,10 @@ using namespace screen;
         else
             stateStr = "Core: " + std::to_string(currCore);
         std::string time = "";
-        if (state == ProcessState::RUNNING)
-            time = startTime;
-        else if (state == ProcessState::TERMINATED)
+        if (state == ProcessState::TERMINATED)
             time = endTime;
+        else
+            time = startTime;
         return name + "   (" + time + ")   " + stateStr + "   " + std::to_string(currLine) + " / " + std::to_string(maxLine);
     }
 
@@ -204,4 +203,12 @@ using namespace screen;
 
     void Screen::setEndTime() {
         endTime = timestampFormat();
+    }
+
+    bool Screen::isFinished() const {
+        return currLine == maxLine;
+    }
+
+    void Screen::setState(ProcessState state) {
+        this->state = state;
     }

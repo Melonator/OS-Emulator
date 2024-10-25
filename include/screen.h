@@ -12,7 +12,7 @@ enum class ProcessState {
 namespace screen {
     class Screen {
     public:
-        Screen(std::string name);
+        Screen(std::string name, unsigned int maxLine);
         Screen();
         std::string getName();
         void hide();
@@ -20,17 +20,19 @@ namespace screen {
         void run();
         void print();
         void setCore(int core);
-        int getCurrLine() const;
-        int getMaxLine() const;
+        unsigned int getCurrLine() const;
+        unsigned int getMaxLine() const;
         std::string toString();
         void setStartTime();
         void setEndTime();
         void processInfo() const;
+        bool isFinished() const;
+        void setState(ProcessState state);
     private:
         std::string name;
         std::string timestamp;
-        int currLine;
-        int maxLine;
+        unsigned int currLine;
+        unsigned int maxLine;
         bool isVisible;
         ProcessState state;
         int currCore;

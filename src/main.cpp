@@ -52,7 +52,8 @@ void processThread(const std::string &name, std::vector<std::shared_ptr<screen::
     isMainInputActive = false; // Disable main input
     cv.notify_all();
 
-    std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name);
+    unsigned int ins = sched->getMinIns() + (rand() % (sched->getMaxIns() - sched->getMinIns() + 1));
+    std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name, ins);
     processes->push_back(p);
     sched->addProcess(p);
     p->show();
@@ -195,10 +196,12 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
     else if (command == "scheduler-test") {
         std::cout << "Starting test.\n";
         sched->startTest();
+        sameScreen = true;
     }
     else if (command == "scheduler-stop") {
         std::cout << "Stopping test.\n";
         sched->endTest();
+        sameScreen = true;
     }
     else if (command == "report-util") {
         std::cout << "report-util command recognized. Doing something.\n";
@@ -283,6 +286,7 @@ void run(std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_pt
 int main() {
     // system("cls");
     std::string input = "";
+    srand(time(nullptr));
     std::vector<std::shared_ptr<screen::Screen>>* processes = new std::vector<std::shared_ptr<screen::Screen>>();
     std::shared_ptr<scheduler::Scheduler> sched;
     run(processes, sched);

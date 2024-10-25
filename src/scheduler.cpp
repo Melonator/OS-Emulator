@@ -27,9 +27,9 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
 
     int numCores = std::stoi(configs[0]);
     std::string algorithm = configs[1].substr(1, configs[1].size() - 2);
-    int quantum = std::stoi(configs[2]);
+    unsigned int quantum = std::stol(configs[2]);
     this->processes = processes;
-    this->processFreq = std::stoi(configs[3]);
+    this->processFreq = std::stoi(configs[3]) + 1;
     this->minIns = std::stol(configs[4]);
     this->maxIns = std::stol(configs[5]);
     this->delay = std::stol(configs[6]);
@@ -41,7 +41,7 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     this->ready = new std::vector<std::shared_ptr<screen::Screen>>();
     this->running = new std::vector<std::shared_ptr<screen::Screen>>();
     this->finished = new std::vector<std::shared_ptr<screen::Screen>>();
-    this->cpu = cpu::CPU(numCores, quantum, algorithm, this->ready, this->running, this->finished);
+    this->cpu = cpu::CPU(numCores, quantum, delay, algorithm, this->ready, this->running, this->finished);
     this->generateProcess = false;
 }
 
@@ -49,7 +49,8 @@ void Scheduler::run() {
     while (true) {
         // Logic for running processes
         if (currCycle % processFreq == 0 && generateProcess) {
-            std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>("screen_" + std::to_string(processIndex));
+            unsigned int ins = minIns + (rand() % (maxIns - minIns + 1));
+            std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>("screen_" + std::to_string(processIndex), ins);
             processes->push_back(p);
             addProcess(p);
             processIndex++;
@@ -74,7 +75,7 @@ void Scheduler::run() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
-        currCycle++;
+        currCycle += 1;
     }
 }
 
@@ -100,8 +101,8 @@ void Scheduler::printList() {
     std::cout << "--------------------------\n";
     std::cout << "Running processes:\n";
     try {
-        for (int i = 0; i < this->running->size(); i++) {
-            std::cout << this->running->at(i)->toString() << "\n";
+        for (auto & i : *this->running) {
+            std::cout << i->toString() << "\n";
         }
     } catch (const std::exception& e) {
         std::cout << e.what() << std::endl;
@@ -109,11 +110,20 @@ void Scheduler::printList() {
 
     std::cout << "\nFinished processes:\n";
     try {
-        for (int i = 0; i < this->finished->size(); i++) {
-            std::cout << this->finished->at(i)->toString() << "\n";
+        for (auto & i : *this->finished) {
+            std::cout << i->toString() << "\n";
         }
     } catch (const std::exception& e) {
         std::cout << e.what() << std::endl;
     }
     std::cout << "--------------------------\n";
 }
+
+unsigned int Scheduler::getMinIns() const {
+    return this->minIns;
+}
+
+unsigned int Scheduler::getMaxIns() const {
+    return this->maxIns;
+}
+
