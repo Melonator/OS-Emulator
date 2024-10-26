@@ -146,19 +146,17 @@ using namespace screen;
 
     void Screen::print() {
         // output to log file
-        std::ofstream logFile;
-        std::string fileName = name + "_log.txt";
-        logFile.open(fileName, std::ios_base::app);
-        state = ProcessState::RUNNING;
+        // std::ofstream logFile;
+        // std::string fileName = name + "_log.txt";
+        // logFile.open(fileName, std::ios_base::app);
+        // state = ProcessState::RUNNING;
 
         // perform print command for n amount of times
-        // for (int i = currLine; i < maxLine; i++) {
-            std::string timestamp = timestampFormat();
-            logFile << "(" << timestamp << ") " << "Core:" << currCore << " \"Hello world from " << name << "!\"\n";
-            // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // std::string timestamp = timestampFormat();
+            // logFile << "(" << timestamp << ") " << "Core:" << currCore << " \"Hello world from " << name << "!\"\n";
+            // std::this_thread::sleep_for(std::chrono::milliseconds(10));
             currLine++;
-        // }
-        logFile.close();
+        // logFile.close();
     }
 
     void Screen::setCore(int core) {

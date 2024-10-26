@@ -132,11 +132,11 @@ void Core::work() {
         }
         else
             currScreen->setState(ProcessState::WAITING);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         cycleFinished = true;
         while (cycleFinished) {
             // wait here for cycle update
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         currCycle += 1;
         // break;

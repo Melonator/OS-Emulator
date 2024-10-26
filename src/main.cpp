@@ -207,7 +207,8 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
         sameScreen = true;
     }
     else if (command == "report-util") {
-        std::cout << "report-util command recognized. Doing something.\n";
+        sched->saveList();
+        std::cout << "Report generated to csopesy-log.txt\n";
     }
 }
 

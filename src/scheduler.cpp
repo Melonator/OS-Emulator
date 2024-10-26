@@ -107,7 +107,7 @@ void Scheduler::startTest() {
 
 void Scheduler::endTest() {
     this->generateProcess = false;
-    std::cout << "Generated processes: " << processes->size() << "\n";
+    // std::cout << "Generated processes: " << processes->size() << "\n";
 }
 
 
@@ -191,7 +191,7 @@ void Scheduler::printList() {
 void Scheduler::saveList() {
     // save to file csopesy-log.txt
     std::ofstream file;
-    file.open("../src/csopesy-log.txt");
+    file.open("csopesy-log.txt");
     file << screenList();
     file.close();
 }
