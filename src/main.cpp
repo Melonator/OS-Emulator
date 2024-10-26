@@ -55,7 +55,10 @@ void processThread(const std::string &name, std::vector<std::shared_ptr<screen::
     unsigned int ins = sched->getMinIns() + (rand() % (sched->getMaxIns() - sched->getMinIns() + 1));
     std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name, ins);
     processes->push_back(p);
-    sched->addProcess(p);
+    {
+        std::lock_guard<std::mutex> readyLock(sched->readyMutex);
+        sched->addProcess(p);
+    }
     p->show();
     p->run();
 

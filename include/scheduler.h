@@ -18,8 +18,11 @@ namespace scheduler {
         unsigned int delay; // Delay before executing the next instruction in CPU cycles. The delay is a "busy-waiting" scheme wherein the process remains in the CPU. The range is [0, 2^32]. If zero, each instruction is executed per CPU cycle.
         unsigned int processIndex;
         bool generateProcess;
+        std::mutex runningMutex;
+        std::mutex finishedMutex;
 
     public:
+        std::mutex readyMutex;
         Scheduler();
         Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes);
         void run();
@@ -29,8 +32,10 @@ namespace scheduler {
         void printList();
         void startTest();
         void endTest();
+        void saveList();
         unsigned int getMinIns() const;
         unsigned int getMaxIns() const;
+        std::string screenList();
     };
 }
 #endif //SCHEDULER_H
