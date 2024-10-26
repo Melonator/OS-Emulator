@@ -162,7 +162,11 @@ using namespace screen;
     }
 
     void Screen::setCore(int core) {
-        this->currCore = core;
+        try {
+            this->currCore = core;
+        } catch (std::exception& e) {
+
+        }
     }
     std::string timestampFormat() {
         const time_t timestamp = time(NULL);

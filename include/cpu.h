@@ -11,16 +11,17 @@ enum class CoreState {
 namespace cpu {
     class Core {
     private:
-        int id;
+        int id{};
         CoreState state;
-        unsigned int quantum;
-        unsigned int remainingQuantum;
-        unsigned int currCycle;
-        unsigned int delay;
+        unsigned int quantum{};
+        unsigned int remainingQuantum{};
+        unsigned int currCycle{};
+        unsigned int delay{};
+        bool cycleFinished{};
         std::shared_ptr<screen::Screen> currScreen;
-        std::vector<std::shared_ptr<screen::Screen>>* ready;
-        std::vector<std::shared_ptr<screen::Screen>>* running;
-        std::vector<std::shared_ptr<screen::Screen>>* finished;
+        std::vector<std::shared_ptr<screen::Screen>>* ready{};
+        std::vector<std::shared_ptr<screen::Screen>>* running{};
+        std::vector<std::shared_ptr<screen::Screen>>* finished{};
     public:
         Core();
         Core(int id, unsigned int quantum, unsigned int delay, std::vector<std::shared_ptr<screen::Screen>>* ready, std::vector<std::shared_ptr<screen::Screen>> *running, std::vector<std::shared_ptr<screen::Screen>> *finished);
@@ -31,6 +32,8 @@ namespace cpu {
         void removeRunning(std::shared_ptr<screen::Screen> s);
         void addFinished(std::shared_ptr<screen::Screen> s);
         void addReady(std::shared_ptr<screen::Screen> s);
+        bool isCycleFinished() const;
+        void setCycleFinished(bool cycleFinished);
     };
 
     class CPU {
@@ -44,6 +47,10 @@ namespace cpu {
         CPU(int numCores, unsigned int quantum, unsigned int delay, const std::string &algorithm, std::vector<std::shared_ptr<screen::Screen>>* ready, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished);
         int getNumCores() const;
         std::vector<std::shared_ptr<Core>> getCores() const;
+        bool allCyclesFinished() const;
+        void setAllCyclesFinished(bool cycleFinished);
+        float getUtilization();
+        int getAvailableCores();
     };
 
 }

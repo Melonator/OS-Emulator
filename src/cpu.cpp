@@ -33,12 +33,39 @@ std::vector<std::shared_ptr<Core>> CPU::getCores() const {
     return this->cores;
 }
 
+bool CPU::allCyclesFinished() const {
+    for (int i = 0; i < numCores; i++) {
+        if (!cores.at(i)->isCycleFinished())
+            return false;
+    }
+    return true;
+}
+
+void CPU::setAllCyclesFinished(bool cycleFinished) {
+    for (int i = 0; i < numCores; i++) {
+        cores.at(i)->setCycleFinished(cycleFinished);
+    }
+}
+
+float CPU::getUtilization() {
+    int busy = 0;
+    for (int i = 0; i < numCores; i++) {
+        if (cores.at(i)->getState() == CoreState::BUSY)
+            busy++;
+    }
+    return (float)busy / numCores;
+}
+
+int CPU::getAvailableCores() {
+    int available = 0;
+    for (int i = 0; i < numCores; i++) {
+        if (cores.at(i)->getState() == CoreState::IDLE)
+            available++;
+    }
+    return available;
+}
 
 Core::Core() {
-    this->id = -1;
-    this->state = CoreState::IDLE;
-    this->currScreen = nullptr;
-
 }
 
 Core::Core(int id, unsigned int quantum, unsigned int delay, std::vector<std::shared_ptr<screen::Screen>>* ready, std::vector<std::shared_ptr<screen::Screen>>* running, std::vector<std::shared_ptr<screen::Screen>>* finished) {
@@ -52,6 +79,7 @@ Core::Core(int id, unsigned int quantum, unsigned int delay, std::vector<std::sh
     this->remainingQuantum = quantum;
     this->currCycle = 0;
     this->delay = delay + 1;
+    this->cycleFinished = false;
 }
 
 void Core::work() {
@@ -59,12 +87,13 @@ void Core::work() {
         // if delay cycles have passed
         if (currCycle % delay == 0) {
             if (this->state == CoreState::BUSY && currScreen != nullptr) {
+                currScreen->setState(ProcessState::RUNNING);
                 // preempt if rr
                 if (remainingQuantum == 0 && quantum != 0) {
                     currScreen->setCore(-1);
                     removeRunning(currScreen);
                     currScreen->setState(ProcessState::READY);
-                    ready->push_back(currScreen);
+                    addReady(currScreen);
                     currScreen = nullptr;
                     this->state = CoreState::IDLE;
                     remainingQuantum = quantum;
@@ -89,7 +118,14 @@ void Core::work() {
                 }
             }
         }
+        else
+            currScreen->setState(ProcessState::WAITING);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        cycleFinished = true;
+        while (cycleFinished) {
+            // wait here for cycle update
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
         currCycle += 1;
         // break;
     }
@@ -114,6 +150,10 @@ void Core::addFinished(std::shared_ptr<screen::Screen> s) {
     finished->push_back(s);
 }
 
+void Core::addReady(std::shared_ptr<screen::Screen> s) {
+    ready->push_back(s);
+}
+
 void Core::removeRunning(std::shared_ptr<screen::Screen> s) {
     for (int i = 0; i < running->size(); i++) {
         if (running->at(i) == s) {
@@ -122,4 +162,11 @@ void Core::removeRunning(std::shared_ptr<screen::Screen> s) {
     }
 }
 
+bool Core::isCycleFinished() const {
+    return cycleFinished;
+}
+
+void Core::setCycleFinished(bool cycleFinished) {
+    this->cycleFinished = cycleFinished;
+}
 

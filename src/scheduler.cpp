@@ -47,7 +47,7 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
 
 void Scheduler::run() {
     while (true) {
-        // Logic for running processes
+        // scheduler-test process generation
         if (currCycle % processFreq == 0 && generateProcess) {
             unsigned int ins = minIns + (rand() % (maxIns - minIns + 1));
             std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>("screen_" + std::to_string(processIndex), ins);
@@ -55,10 +55,10 @@ void Scheduler::run() {
             addProcess(p);
             processIndex++;
         }
+
+        // check for available cores
         for (int i = 0; i < cpu.getNumCores(); i++) {
-        // if (this->ready->size() > 0) {
             // run processes
-            // for (int i = 0; i < cpu.getNumCores(); i++) {
             if (this->ready->size() > 0) {
                 std::shared_ptr<cpu::Core> core = this->cpu.getCores().at(i);
                 if (core->getState() == CoreState::IDLE) {
@@ -75,7 +75,12 @@ void Scheduler::run() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
+        while (!this->cpu.allCyclesFinished()) {
+            // wait
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
         currCycle += 1;
+        this->cpu.setAllCyclesFinished(false);
     }
 }
 
@@ -98,21 +103,34 @@ void Scheduler::addRunning(std::shared_ptr<screen::Screen> s) {
 }
 
 void Scheduler::printList() {
-    std::cout << "--------------------------\n";
+    int available = cpu.getAvailableCores();
+    int coresUsed = cpu.getNumCores() - available;
+
+    printf("CPU Utilization: %.2f%%\n", cpu.getUtilization() * 100);
+    printf("Cores used: %d\n", coresUsed);
+    printf("Cores available: %d\n", available);
+
+    std::cout << "\n--------------------------\n";
     std::cout << "Running processes:\n";
     try {
-        for (auto & i : *this->running) {
-            std::cout << i->toString() << "\n";
+        for (int i = 0; i < running->size(); i++) {
+            std::cout << running->at(i)->toString() << "\n";
         }
+        // for (auto & i : *this->running) {
+        //     std::cout << i->toString() << "\n";
+        // }
     } catch (const std::exception& e) {
         std::cout << e.what() << std::endl;
     }
 
     std::cout << "\nFinished processes:\n";
     try {
-        for (auto & i : *this->finished) {
-            std::cout << i->toString() << "\n";
+        for (int i = 0; i < finished->size(); i++) {
+            std::cout << finished->at(i)->toString() << "\n";
         }
+        // for (auto & i : *this->finished) {
+        //     std::cout << i->toString() << "\n";
+        // }
     } catch (const std::exception& e) {
         std::cout << e.what() << std::endl;
     }
