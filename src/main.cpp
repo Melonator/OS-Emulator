@@ -92,6 +92,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
     if(command == "initialize") {
         if(is_initialized) {
             std::cout << dye::red("Already initialized\n");
+            sameScreen = true;
             return;
         }
         sched = std::make_shared<scheduler::Scheduler>(processes);
