@@ -1,6 +1,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 #include "cpu.h"
+#include "memory_allocator.h"
 #include "screen.h"
 
 namespace scheduler {
@@ -11,14 +12,17 @@ namespace scheduler {
         std::vector<std::shared_ptr<screen::Screen>>* ready;
         std::vector<std::shared_ptr<screen::Screen>>* running;
         std::vector<std::shared_ptr<screen::Screen>>* finished;
+        std::shared_ptr<allocator::FirstFit> allocator;
         unsigned int currCycle;
         unsigned int processFreq; // The frequency of generating processes in the "scheduler-test" command in CPU cycles. The range is [1, 2^32]. If one, a new process is generated at the end of each CPU cycle.
         unsigned int minIns; // The minimum instructions/command per process. The range is [1, 2^32].
         unsigned int maxIns; // The maximum instructions/command per process. The range is [1, 2^32].
         unsigned int delay; // Delay before executing the next instruction in CPU cycles. The delay is a "busy-waiting" scheme wherein the process remains in the CPU. The range is [0, 2^32]. If zero, each instruction is executed per CPU cycle.
         unsigned int processIndex;
+        unsigned int quantum;
         size_t memPerProc;
         size_t memory;
+        size_t blockSize;
         bool generateProcess;
         std::mutex runningMutex;
         std::mutex finishedMutex;
@@ -35,6 +39,7 @@ namespace scheduler {
         void startTest();
         void endTest();
         void saveList();
+        std::shared_ptr<screen::Screen> createProcess(std::string name);
         unsigned int getMinIns() const;
         unsigned int getMaxIns() const;
         std::string screenList();

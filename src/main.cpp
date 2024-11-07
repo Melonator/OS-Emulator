@@ -52,8 +52,8 @@ void processThread(const std::string &name, std::vector<std::shared_ptr<screen::
     isMainInputActive = false; // Disable main input
     cv.notify_all();
 
-    unsigned int ins = sched->getMinIns() + (rand() % (sched->getMaxIns() - sched->getMinIns() + 1));
-    std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name, ins);
+    // unsigned int ins = sched->getMinIns() + (rand() % (sched->getMaxIns() - sched->getMinIns() + 1));
+    std::shared_ptr<screen::Screen> p = sched->createProcess(name);
     processes->push_back(p);
     {
         std::lock_guard<std::mutex> readyLock(sched->readyMutex);

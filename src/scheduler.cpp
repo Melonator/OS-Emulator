@@ -16,7 +16,7 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     std::ifstream file;
     file.open("../src/config.txt");
     std::string line;
-    std::string configs[7];
+    std::string configs[10];
     int i = 0;
     while (getline(file, line)) {
         char *ptr = strtok(line.data(), " ");
@@ -28,13 +28,14 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
 
     int numCores = std::stoi(configs[0]);
     std::string algorithm = configs[1].substr(1, configs[1].size() - 2);
-    unsigned int quantum = std::stol(configs[2]);
+    this->quantum = std::stol(configs[2]);
     this->processes = processes;
     this->processFreq = std::stoi(configs[3]) + 1;
     this->minIns = std::stol(configs[4]);
     this->maxIns = std::stol(configs[5]);
     this->delay = std::stol(configs[6]);
     this->memory = std::stol(configs[7]);
+    this->blockSize = std::stol(configs[8]);
     this->memPerProc = std::stol(configs[9]);
     // std::cout << numCores << " " << algorithm << " " << quantum << " " << processFreq << " " << minIns << " " << maxIns << " " << delay << std::endl;
     if (algorithm == "fcfs")
@@ -44,6 +45,7 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     this->ready = new std::vector<std::shared_ptr<screen::Screen>>();
     this->running = new std::vector<std::shared_ptr<screen::Screen>>();
     this->finished = new std::vector<std::shared_ptr<screen::Screen>>();
+    this->allocator = std::make_shared<allocator::FirstFit>(memory, blockSize);
     this->cpu = cpu::CPU(numCores, quantum, delay, &readyMutex, &runningMutex, &finishedMutex, algorithm, this->ready, this->running, this->finished);
     this->generateProcess = false;
 }
@@ -64,10 +66,18 @@ void Scheduler::run() {
                         process = ready->front();
                         ready->erase(ready->begin());
                         if (process != nullptr) {
-                            started = true;
-                            core->setScreen(process);
-                            std::lock_guard<std::mutex> runningLock(runningMutex);
-                            addRunning(process);
+                            // add allocator logic here
+                            if (process->getMemLoc() == nullptr)
+                                process->setMemLoc(allocator->allocate(process->getMemoryRequired(), process->getName()));
+                            if (process->getMemLoc() != nullptr) {
+                                started = true;
+                                core->setScreen(process);
+                                std::lock_guard<std::mutex> runningLock(runningMutex);
+                                addRunning(process);
+                            }
+                            else {
+                                this->ready->push_back(process);
+                            }
                         }
                     } catch (const std::exception& e) {
                         std::cout << e.what() << std::endl;
@@ -78,18 +88,33 @@ void Scheduler::run() {
         }
         while (!this->cpu.allCyclesFinished()) {
             // wait
-            // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
 
         if (started) {
+            {
+                // deallocate memory when finished
+                std::lock_guard<std::mutex> finishedLock(finishedMutex);
+                for (int i = 0; i < finished->size(); i++) {
+                    std::shared_ptr<screen::Screen> p = finished->at(i);
+                    if (p != nullptr) {
+                        allocator->deallocate(p->getMemLoc());
+                        p->setMemLoc(nullptr);
+                    }
+                }
+            }
+
+
+            if (currCycle % quantum == 0) {
+                allocator->visualizeMemory();
+            }
             currCycle += 1;
             this->cpu.setAllCyclesFinished(false);
         }
 
         // scheduler-test process generation
         if (currCycle % processFreq == 0 && generateProcess) {
-            unsigned int ins = minIns + (rand() % (maxIns - minIns + 1));
-            std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>("screen_" + std::to_string(processIndex), ins);
+            std::shared_ptr<screen::Screen> p = createProcess("screen_" + std::to_string(processIndex));
             processes->push_back(p);
             {
                 std::lock_guard<std::mutex> readyLock(readyMutex);
@@ -110,6 +135,12 @@ void Scheduler::startTest() {
 void Scheduler::endTest() {
     this->generateProcess = false;
     // std::cout << "Generated processes: " << processes->size() << "\n";
+}
+
+std::shared_ptr<screen::Screen> Scheduler::createProcess(std::string name) {
+    unsigned int ins = getMinIns() + (rand() % (getMaxIns() - getMinIns() + 1));
+    std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name, ins, memPerProc);
+    return p;
 }
 
 

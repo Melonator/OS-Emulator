@@ -28,6 +28,9 @@ namespace screen {
         void processInfo() const;
         bool isFinished() const;
         void setState(ProcessState state);
+        size_t getMemoryRequired() const;
+        void setMemLoc(void* memLoc);
+        void* getMemLoc() const;
     private:
         std::string name;
         std::string timestamp;
@@ -37,6 +40,7 @@ namespace screen {
         ProcessState state;
         int currCore;
         size_t memoryRequired;
+        void *memLoc;
         std::string startTime;
         std::string endTime;
         std::string GetCommand();

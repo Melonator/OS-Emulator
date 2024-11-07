@@ -25,7 +25,7 @@ using namespace screen;
         this->endTime = "";
         this->isVisible = false;
     }
-    Screen::Screen(const std::string name, unsigned int maxLine) {
+    Screen::Screen(const std::string name, unsigned int maxLine, size_t memoryRequired) {
         this->name = name;
         this->timestamp = timestampFormat();
         this->currLine = 0;
@@ -33,6 +33,8 @@ using namespace screen;
         this->state = ProcessState::READY;
         this->currCore = -1;
         this->isVisible = true;
+        this->memoryRequired = memoryRequired;
+        this->memLoc = nullptr;
     }
     std::string Screen::getName() {
         return this->name;
@@ -154,7 +156,7 @@ using namespace screen;
         // perform print command for n amount of times
             // std::string timestamp = timestampFormat();
             // logFile << "(" << timestamp << ") " << "Core:" << currCore << " \"Hello world from " << name << "!\"\n";
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            // std::this_thread::sleep_for(std::chrono::milliseconds(500));
             currLine++;
         // logFile.close();
     }
@@ -213,4 +215,16 @@ using namespace screen;
 
     void Screen::setState(ProcessState state) {
         this->state = state;
+    }
+
+    size_t Screen::getMemoryRequired() const {
+        return this->memoryRequired;
+    }
+
+    void Screen::setMemLoc(void* memLoc) {
+        this->memLoc = memLoc;
+    }
+
+    void* Screen::getMemLoc() const {
+        return this->memLoc;
     }
