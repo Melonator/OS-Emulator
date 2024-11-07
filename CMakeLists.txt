@@ -14,4 +14,6 @@ add_executable(OS_Emualtor src/main.cpp
         include/shared_state.h
         src/shared_state.cpp
         include/color.hpp
+        include/memory_allocator.h
+        src/memory_allocator.cpp
 )

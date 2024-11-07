@@ -12,7 +12,7 @@ enum class ProcessState {
 namespace screen {
     class Screen {
     public:
-        Screen(std::string name, unsigned int maxLine);
+        Screen(std::string name, unsigned int maxLine, size_t memoryRequired);
         Screen();
         std::string getName();
         void hide();
@@ -36,6 +36,7 @@ namespace screen {
         bool isVisible;
         ProcessState state;
         int currCore;
+        size_t memoryRequired;
         std::string startTime;
         std::string endTime;
         std::string GetCommand();

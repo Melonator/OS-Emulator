@@ -17,6 +17,8 @@ namespace scheduler {
         unsigned int maxIns; // The maximum instructions/command per process. The range is [1, 2^32].
         unsigned int delay; // Delay before executing the next instruction in CPU cycles. The delay is a "busy-waiting" scheme wherein the process remains in the CPU. The range is [0, 2^32]. If zero, each instruction is executed per CPU cycle.
         unsigned int processIndex;
+        size_t memPerProc;
+        size_t memory;
         bool generateProcess;
         std::mutex runningMutex;
         std::mutex finishedMutex;

@@ -34,6 +34,8 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     this->minIns = std::stol(configs[4]);
     this->maxIns = std::stol(configs[5]);
     this->delay = std::stol(configs[6]);
+    this->memory = std::stol(configs[7]);
+    this->memPerProc = std::stol(configs[9]);
     // std::cout << numCores << " " << algorithm << " " << quantum << " " << processFreq << " " << minIns << " " << maxIns << " " << delay << std::endl;
     if (algorithm == "fcfs")
         quantum = 0;
