@@ -106,7 +106,12 @@ void Scheduler::run() {
 
 
             if (currCycle % quantum == 0) {
-                allocator->visualizeMemory();
+                // visualize memory per qq
+                std::ofstream logFile;
+                std::string fileName = "memory_stamp_" + std::to_string(currCycle) + ".txt";
+                logFile.open(fileName, std::ios_base::app);
+                logFile << allocator->visualizeMemory();
+                logFile.close();
             }
             currCycle += 1;
             this->cpu.setAllCyclesFinished(false);

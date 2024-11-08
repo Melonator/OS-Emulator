@@ -10,6 +10,7 @@ using namespace allocator;
 FirstFit::FirstFit(size_t size, size_t blockSize) : maximumSize(size) {
     this->blockSize = blockSize;
     memory.reserve(maximumSize);
+    this->allocatedSize = 0;
     initializeMemory();
 }
 
@@ -54,6 +55,7 @@ void FirstFit::deallocate(void *ptr) {
 }
 
 std::string FirstFit::visualizeMemory() {
+    std::lock_guard<std::mutex> lock(allocatorMutex);
     const time_t timestamp = time(NULL);
     struct tm datetime = *localtime(&timestamp);
     char output[50] = "";
@@ -61,23 +63,28 @@ std::string FirstFit::visualizeMemory() {
     const std::string timestampStr = output;
     std::string result = "";
     // current timestamp
-    result += "timestamp = " + timestampStr + "\n";
+    result += "Timestamp: " + timestampStr + "\n";
     // number of processes in memory
+    result += "Number of processes in memory: " + std::to_string(allocations.size()) + "\n";
     // total number of fragmentation in KB
-    result += "total number of fragmentation in KB = " + std::to_string(0) + "\n";
-    result += "----end---- = " + maximumSize;
+    result += "total number of fragmentation in KB: " + std::to_string(maximumSize - allocatedSize) + "\n";
+    result += "\n----end---- = " + std::to_string(maximumSize - 1) + "\n\n";
 
-    for (size_t i = 0; i < allocations.size(); ++i) {
-        // result +=
-        for (size_t j = 0; j < allocations[i].size; ++j) {
-            std::cout << memory[allocations[i].startBlock + j];
+    for (size_t i = maximumSize - 1;i --> 0 ;) {
+
+        for (size_t j = 0; j < allocations.size(); ++j) {
+            if (allocations[j].startBlock * blockSize == i) {
+                result +=  (std::to_string((allocations[j].startBlock + allocations[j].size) * blockSize - 1)) + "\n";
+                result += allocations[j].name + "\n";
+                result += (std::to_string(allocations[j].startBlock * blockSize)) + "\n\n";
+            }
         }
-        std::cout << std::endl;
+        // std::cout << std::endl;
     }
-    result += "----start---- = " + 0;
+    result += "\n----start---- = 0\n";
     // return std::string(memory.begin(), memory.end());
-    return "";
-    // return result;
+    // return "";
+    return result;
 }
 
 void FirstFit::initializeMemory() {
