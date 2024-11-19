@@ -48,6 +48,7 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     this->allocator = std::make_shared<allocator::FirstFit>(memory, blockSize);
     this->cpu = cpu::CPU(numCores, quantum, delay, &readyMutex, &runningMutex, &finishedMutex, algorithm, this->ready, this->running, this->finished);
     this->generateProcess = false;
+    this->screenLS = false;
 }
 
 void Scheduler::run() {
@@ -112,6 +113,11 @@ void Scheduler::run() {
                 logFile.open(fileName, std::ios_base::app);
                 logFile << allocator->visualizeMemory();
                 logFile.close();
+            }
+
+            if (screenLS) {
+                printList();
+                screenLS = false;
             }
             currCycle += 1;
             this->cpu.setAllCyclesFinished(false);
@@ -241,5 +247,9 @@ unsigned int Scheduler::getMinIns() const {
 
 unsigned int Scheduler::getMaxIns() const {
     return this->maxIns;
+}
+
+void Scheduler::setScreenLS() {
+    this->screenLS = true;
 }
 

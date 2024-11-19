@@ -24,6 +24,7 @@ namespace scheduler {
         size_t memory;
         size_t blockSize;
         bool generateProcess;
+        bool screenLS;
         std::mutex runningMutex;
         std::mutex finishedMutex;
 
@@ -43,6 +44,7 @@ namespace scheduler {
         unsigned int getMinIns() const;
         unsigned int getMaxIns() const;
         std::string screenList();
+        void setScreenLS();
     };
 }
 #endif //SCHEDULER_H
