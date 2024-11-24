@@ -45,7 +45,7 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     this->ready = new std::vector<std::shared_ptr<screen::Screen>>();
     this->running = new std::vector<std::shared_ptr<screen::Screen>>();
     this->finished = new std::vector<std::shared_ptr<screen::Screen>>();
-    this->allocator = std::make_shared<allocator::FirstFit>(memory, blockSize);
+    this->flatModel = std::make_shared<allocator::FlatModel>(memory, blockSize);
     this->cpu = cpu::CPU(numCores, quantum, delay, &readyMutex, &runningMutex, &finishedMutex, algorithm, this->ready, this->running, this->finished);
     this->generateProcess = false;
     this->screenLS = false;
@@ -69,7 +69,7 @@ void Scheduler::run() {
                         if (process != nullptr) {
                             // add allocator logic here
                             if (process->getMemLoc() == nullptr)
-                                process->setMemLoc(allocator->allocate(process->getMemoryRequired(), process->getName()));
+                                process->setMemLoc(flatModel->allocate(process->getMemoryRequired(), process->getName()));
                             if (process->getMemLoc() != nullptr) {
                                 started = true;
                                 core->setScreen(process);
@@ -99,21 +99,21 @@ void Scheduler::run() {
                 for (int i = 0; i < finished->size(); i++) {
                     std::shared_ptr<screen::Screen> p = finished->at(i);
                     if (p != nullptr) {
-                        allocator->deallocate(p->getMemLoc());
+                        flatModel->deallocate(p->getMemLoc());
                         p->setMemLoc(nullptr);
                     }
                 }
             }
 
 
-            if (currCycle % quantum == 0) {
-                // visualize memory per qq
-                std::ofstream logFile;
-                std::string fileName = "memory_stamp_" + std::to_string(currCycle) + ".txt";
-                logFile.open(fileName, std::ios_base::app);
-                logFile << allocator->visualizeMemory();
-                logFile.close();
-            }
+            // if (currCycle % quantum == 0) {
+            //     // visualize memory per qq
+            //     std::ofstream logFile;
+            //     std::string fileName = "memory_stamp_" + std::to_string(currCycle) + ".txt";
+            //     logFile.open(fileName, std::ios_base::app);
+            //     logFile << flatModel->visualizeMemory();
+            //     logFile.close();
+            // }
 
             if (screenLS) {
                 printList();

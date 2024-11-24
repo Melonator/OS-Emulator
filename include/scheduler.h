@@ -12,7 +12,7 @@ namespace scheduler {
         std::vector<std::shared_ptr<screen::Screen>>* ready;
         std::vector<std::shared_ptr<screen::Screen>>* running;
         std::vector<std::shared_ptr<screen::Screen>>* finished;
-        std::shared_ptr<allocator::FirstFit> allocator;
+        std::shared_ptr<allocator::FlatModel> flatModel;
         unsigned int currCycle;
         unsigned int processFreq; // The frequency of generating processes in the "scheduler-test" command in CPU cycles. The range is [1, 2^32]. If one, a new process is generated at the end of each CPU cycle.
         unsigned int minIns; // The minimum instructions/command per process. The range is [1, 2^32].

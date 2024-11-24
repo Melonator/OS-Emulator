@@ -6,19 +6,19 @@
 
 using namespace allocator;
 
-
-FirstFit::FirstFit(size_t size, size_t blockSize) : maximumSize(size) {
+#pragma region FirstFit
+FlatModel::FlatModel(size_t size, size_t blockSize) : maximumSize(size) {
     this->blockSize = blockSize;
     memory.reserve(maximumSize);
     this->allocatedSize = 0;
     initializeMemory();
 }
 
-FirstFit::~FirstFit() {
+FlatModel::~FlatModel() {
     memory.clear();
 }
 
-void *FirstFit::allocate(size_t size, const std::string& name) {
+void *FlatModel::allocate(size_t size, const std::string& name) {
     size_t requiredBlocks = (size + blockSize - 1) / blockSize;
     size_t totalBlocks = maximumSize / blockSize;
     for (size_t i = 0; i <= totalBlocks - requiredBlocks; ++i) {
@@ -34,7 +34,7 @@ void *FirstFit::allocate(size_t size, const std::string& name) {
     return nullptr;
 }
 
-void FirstFit::deallocate(void *ptr) {
+void FlatModel::deallocate(void *ptr) {
     size_t startBlock = (static_cast<char*>(ptr) - &memory[0]) / blockSize;
 
     // Find the corresponding allocation record in allocations
@@ -54,7 +54,7 @@ void FirstFit::deallocate(void *ptr) {
     //     deallocateAt(index);
 }
 
-std::string FirstFit::visualizeMemory() {
+std::string FlatModel::visualizeMemory() {
     std::lock_guard<std::mutex> lock(allocatorMutex);
     const time_t timestamp = time(NULL);
     struct tm datetime = *localtime(&timestamp);
@@ -79,7 +79,7 @@ std::string FirstFit::visualizeMemory() {
                 result += (std::to_string(allocations[j].startBlock * blockSize)) + "\n\n";
             }
         }
-        // std::cout << std::endl;
+        // std:: cout << std::endl;
     }
     result += "\n----start---- = 0\n";
     // return std::string(memory.begin(), memory.end());
@@ -87,16 +87,16 @@ std::string FirstFit::visualizeMemory() {
     return result;
 }
 
-void FirstFit::initializeMemory() {
+void FlatModel::initializeMemory() {
     std::fill(memory.begin(), memory.end(), '.'); // '.' represents unallocated memory
     // std::fill(allocations.begin(), allocations.end(), false);
 }
 
-bool FirstFit::canAllocateAt(size_t index, size_t size) const {
+bool FlatModel::canAllocateAt(size_t index, size_t size) const {
     return (index + size <= maximumSize);
 }
 
-bool FirstFit::isBlockFree(size_t startBlock, size_t numBlocks) const {
+bool FlatModel::isBlockFree(size_t startBlock, size_t numBlocks) const {
     for (size_t i = startBlock; i < startBlock + numBlocks; ++i) {
         // Check if any existing allocation overlaps with this block range
         if (std::any_of(allocations.begin(), allocations.end(),
@@ -109,16 +109,113 @@ bool FirstFit::isBlockFree(size_t startBlock, size_t numBlocks) const {
     return true; // Block is free
 }
 
-// void FirstFit::allocateAt(size_t index, size_t size) {
-//     for (size_t i = index; i < index + size; ++i) {
-//         allocations[i] = true;
-//     }
-//     allocatedSize += size;
-//     // std::fill(allocationMap.begin() + index, allocationMap.begin() + index + size, true);
-// }
+void FlatModel::moveToBackingStore(std::string name) {
+    std::lock_guard<std::mutex> lock(backingStoreMutex);
 
-// void FirstFit::deallocateAt(size_t index) {
-//     allocations[index] = false;
-// }
+}
+
+void FlatModel::getFromBackingStore(std::string name) {
+    // move to allocations vector
+}
+
+#pragma endregion FirstFit
+
+#pragma region Paging
+Paging::Paging(size_t size, size_t blockSize, size_t pageSize) : maximumSize(size), pageSize(pageSize) {
+    this->blockSize = blockSize;
+    memory.reserve(maximumSize);
+    this->allocatedSize = 0;
+    initializeMemory();
+}
+
+Paging::~Paging() {
+    memory.clear();
+}
+
+void Paging::initializeMemory() {
+    std::fill(memory.begin(), memory.end(), '.');
+    size_t numPages = maximumSize / pageSize;
+    for (size_t i = 0; i < numPages; i++) {
+        freePages.push_back({i, "", 0});
+    }
+}
+
+void *Paging::allocate(size_t size, const std::string &name, size_t entranceCycle) {
+    size_t reqPages = (size + pageSize - 1) / pageSize;
+    std::lock_guard<std::mutex> freeLock(freeMutex);
+    std::lock_guard<std::mutex> allocatedLock(allocatedMutex);
+    while (reqPages != 0) {
+        Page page = freePages.front();
+        freePages.erase(freePages.begin());
+        page.name = name;
+        page.entranceCycle = entranceCycle;
+        allocatedPages.push_back(page);
+        reqPages--;
+    }
+    return nullptr;
+}
+
+bool Paging::canAllocate(size_t size) {
+    std::lock_guard<std::mutex> lock(freeMutex);
+    size_t reqPages = (size + pageSize - 1) / pageSize;
+    return freePages.size() >= reqPages;
+}
+
+
+void Paging::deallocate(std::string name) {
+    std::lock_guard<std::mutex> allocatedLock(allocatedMutex);
+    for (size_t i = 0; i < allocatedPages.size(); i++) {
+        Page page = allocatedPages[i];
+        if (page.name == name) {
+            {
+                std::lock_guard<std::mutex> freeLock(freeMutex);
+                freePages.push_back({page.index, "", 0});
+            }
+            page.index = -1;
+            allocatedPages.erase(allocatedPages.begin() + i);
+        }
+    }
+}
+
+std::string Paging::visualizeMemory() {
+    return "";
+}
+
+void Paging::moveToBackingStore(std::string name) {
+    // std::lock_guard<std::mutex> backingLock(backingStoreMutex);
+    for (size_t i = 0; i < allocatedPages.size(); i++) {
+        Page page = allocatedPages[i];
+        if (page.name == name) {
+            {
+                std::lock_guard<std::mutex> freeLock(freeMutex);
+                freePages.push_back({page.index, "", 0});
+            }
+            page.index = -1;
+            backingStore.push_back(page);
+            allocatedPages.erase(allocatedPages.begin() + i);
+        }
+    }
+}
+
+void Paging::getFromBackingStore(std::string name, size_t entranceCycle) {
+    std::lock_guard<std::mutex> backingLock(backingStoreMutex);
+    for (size_t i = 0; i < backingStore; i++) {
+        Page page = backingStore[i];
+        if (page.name == name) {
+            std::lock_guard<std::mutex> freeLock(freeMutex);
+            Page freePage = freePages.front();
+            freePages.erase(freePages.begin());
+            freePage.name = name;
+            freePage.entranceCycle = entranceCycle;
+            allocatedPages.push_back(freePage);
+            backingStore.erase(backingStore.begin() + i);
+        }
+    }
+}
+
+#pragma endregion Paging
+
+
+
 
 
