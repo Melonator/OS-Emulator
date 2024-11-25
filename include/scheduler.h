@@ -20,7 +20,8 @@ namespace scheduler {
         unsigned int delay; // Delay before executing the next instruction in CPU cycles. The delay is a "busy-waiting" scheme wherein the process remains in the CPU. The range is [0, 2^32]. If zero, each instruction is executed per CPU cycle.
         unsigned int processIndex;
         unsigned int quantum;
-        size_t memPerProc;
+        size_t minMemPerProc;
+        size_t maxMemPerProc;
         size_t memory;
         size_t blockSize;
         bool generateProcess;

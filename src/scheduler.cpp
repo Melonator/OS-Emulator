@@ -1,5 +1,6 @@
 #include "../include/scheduler.h"
 
+#include <cmath>
 #include <cstring>
 #include <format>
 #include <fstream>
@@ -36,7 +37,15 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     this->delay = std::stol(configs[6]);
     this->memory = std::stol(configs[7]);
     this->blockSize = std::stol(configs[8]);
-    this->memPerProc = std::stol(configs[9]);
+
+    size_t minMem = std::stol(configs[9]);
+    size_t maxMem = std::stol(configs[10]);
+    minMem = log2(minMem);
+    maxMem = log2(maxMem);
+
+    this->minMemPerProc = minMem;
+    this->maxMemPerProc = maxMem;
+
     // std::cout << numCores << " " << algorithm << " " << quantum << " " << processFreq << " " << minIns << " " << maxIns << " " << delay << std::endl;
     if (algorithm == "fcfs")
         quantum = 0;
@@ -150,6 +159,8 @@ void Scheduler::endTest() {
 
 std::shared_ptr<screen::Screen> Scheduler::createProcess(std::string name) {
     unsigned int ins = getMinIns() + (rand() % (getMaxIns() - getMinIns() + 1));
+    size_t memPow = minMemPerProc + (rand() % (maxMemPerProc - minMemPerProc + 1));
+    size_t memPerProc = pow(2, memPow);
     std::shared_ptr<screen::Screen> p = std::make_shared<screen::Screen>(name, ins, memPerProc);
     return p;
 }
