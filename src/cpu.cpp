@@ -83,32 +83,19 @@ Core::Core(int id, unsigned int quantum, unsigned int delay, std::mutex* readyMu
 }
 
 void Core::work() {
-    while (true) {
+    // while (true) {
         // if delay cycles have passed
         if (currCycle % delay == 0) {
             if (this->state == CoreState::BUSY && currScreen != nullptr) {
                 currScreen->setState(ProcessState::RUNNING);
-                // preempt if rr
-                if (remainingQuantum == 0 && quantum != 0) {
-                    currScreen->setCore(-1);
-                    {
-                        std::lock_guard<std::mutex> runningLock(*runningMutex);
-                        removeRunning(currScreen);
-                    }
-                    currScreen->setState(ProcessState::READY);
-                    {
-                        std::lock_guard<std::mutex> readyLock(*readyMutex);
-                        addReady(currScreen);
-                    }
-                    currScreen = nullptr;
-                    this->state = CoreState::IDLE;
-                    remainingQuantum = quantum;
-                    continue;
-                }
-                // std::cout << "CPU " << id << " doing work on " << currScreen->getName() << "\n";
                 currScreen->print();
                 if (quantum != 0)
                     remainingQuantum--;
+                // preempt if rr
+                if (remainingQuantum == 0 && quantum != 0) {
+                    preempt();
+                }
+                // std::cout << "CPU " << id << " doing work on " << currScreen->getName() << "\n";
 
                 // process finished
                 if (currScreen->isFinished()) {
@@ -126,7 +113,6 @@ void Core::work() {
                     // std::cout << "CPU " << id << " finished work on " << currScreen->getName() << "\n";
                     currScreen = nullptr;
                     this->state = CoreState::IDLE;
-                    continue;
                 }
             }
         }
@@ -140,7 +126,7 @@ void Core::work() {
         }
         currCycle += 1;
         // break;
-    }
+    // }
 }
 
 CoreState Core::getState() const {
@@ -180,5 +166,21 @@ bool Core::isCycleFinished() const {
 
 void Core::setCycleFinished(bool cycleFinished) {
     this->cycleFinished = cycleFinished;
+}
+
+void Core::preempt() {
+    currScreen->setCore(-1);
+    {
+        std::lock_guard<std::mutex> runningLock(*runningMutex);
+        removeRunning(currScreen);
+    }
+    currScreen->setState(ProcessState::READY);
+    {
+        std::lock_guard<std::mutex> readyLock(*readyMutex);
+        addReady(currScreen);
+    }
+    currScreen = nullptr;
+    this->state = CoreState::IDLE;
+    remainingQuantum = quantum;
 }
 
