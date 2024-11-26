@@ -121,8 +121,8 @@ void FlatModel::getFromBackingStore(std::string name) {
 #pragma endregion FirstFit
 
 #pragma region Paging
-Paging::Paging(size_t size, size_t blockSize, size_t pageSize) : maximumSize(size), pageSize(pageSize) {
-    this->blockSize = blockSize;
+Paging::Paging(size_t size, size_t pageSize) : maximumSize(size), pageSize(pageSize) {
+    this->blockSize = 0;
     memory.reserve(maximumSize);
     this->allocatedSize = 0;
     initializeMemory();
@@ -182,7 +182,7 @@ std::string Paging::visualizeMemory() {
 }
 
 void Paging::moveToBackingStore(std::string name) {
-    // std::lock_guard<std::mutex> backingLock(backingStoreMutex);
+    std::lock_guard<std::mutex> backingLock(backingStoreMutex);
     for (size_t i = 0; i < allocatedPages.size(); i++) {
         Page page = allocatedPages[i];
         if (page.name == name) {
@@ -211,6 +211,39 @@ void Paging::getFromBackingStore(std::string name, size_t entranceCycle) {
             backingStore.erase(backingStore.begin() + i);
         }
     }
+}
+
+bool Paging::inBackingStore(std::string name) {
+    std::lock_guard<std::mutex> backingLock(backingStoreMutex);
+    for (size_t i = 0; i < backingStore.size(); i++) {
+        if (backingStore[i].name == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Paging::isAllocated(std::string name) {
+    std::lock_guard<std::mutex> allocatedLock(allocatedMutex);
+    for (size_t i = 0; i < allocatedPages.size(); i++) {
+        if (allocatedPages[i].name == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::string Paging::getOldestProcess() {
+    std::lock_guard<std::mutex> allocatedLock(allocatedMutex);
+    std::string oldest = "";
+    size_t minCycle = -1;
+    for (size_t i = 0; i < allocatedPages.size(); i++) {
+        if (allocatedPages[i].entranceCycle < minCycle) {
+            minCycle = allocatedPages[i].entranceCycle;
+            oldest = allocatedPages[i].name;
+        }
+    }
+    return oldest;
 }
 
 #pragma endregion Paging

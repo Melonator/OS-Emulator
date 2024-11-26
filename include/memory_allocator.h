@@ -56,7 +56,7 @@ namespace allocator {
 
     class Paging : public IMemoryAllocator {
     public:
-        Paging(size_t size, size_t blockSize, size_t pageSize);
+        Paging(size_t size, size_t pageSize);
         ~Paging();
 
         void *allocate(size_t size, const std::string &name, size_t entranceCycle);
@@ -66,6 +66,9 @@ namespace allocator {
         void moveToBackingStore(std::string name);
         void getFromBackingStore(std::string name, size_t entranceCycle);
         bool canAllocate(size_t size);
+        bool inBackingStore(std::string name);
+        bool isAllocated(std::string name);
+        std::string getOldestProcess();
     private:
         size_t maximumSize;
         size_t allocatedSize;
