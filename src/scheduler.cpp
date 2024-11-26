@@ -55,6 +55,7 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     this->running = new std::vector<std::shared_ptr<screen::Screen>>();
     this->finished = new std::vector<std::shared_ptr<screen::Screen>>();
     this->flatModel = std::make_shared<allocator::FlatModel>(memory, blockSize);
+    this->pagingModel = std::make_shared<allocator::Paging>(memory, blockSize);
     this->cpu = cpu::CPU(numCores, quantum, delay, &readyMutex, &runningMutex, &finishedMutex, algorithm, this->ready, this->running, this->finished);
     this->generateProcess = false;
     this->screenLS = false;
@@ -77,17 +78,56 @@ void Scheduler::run() {
                         ready->erase(ready->begin());
                         if (process != nullptr) {
                             // add allocator logic here
-                            if (process->getMemLoc() == nullptr)
-                                process->setMemLoc(flatModel->allocate(process->getMemoryRequired(), process->getName()));
-                            if (process->getMemLoc() != nullptr) {
+                            std::string pName = process->getName();
+                            if (pagingModel->isAllocated(pName)) {
                                 started = true;
                                 core->setScreen(process);
                                 std::lock_guard<std::mutex> runningLock(runningMutex);
                                 addRunning(process);
                             }
-                            else {
-                                this->ready->push_back(process);
+                            else if (pagingModel->inBackingStore(pName)) { // check if in backing store
+                                if (pagingModel->canAllocate(process->getMemoryRequired())) {
+                                    pagingModel->getFromBackingStore(pName, currCycle);
+                                    started = true;
+                                    core->setScreen(process);
+                                    std::lock_guard<std::mutex> runningLock(runningMutex);
+                                    addRunning(process);
+                                }
+                                else {
+                                    // move oldest to backing
+                                    std::string oldest = pagingModel->getOldestProcess();
+                                    std::lock_guard<std::mutex> runningLock(runningMutex);
+                                    if (isRunning(oldest))
+                                        preempt(oldest);
+                                    pagingModel->moveToBackingStore(oldest);
+                                    pagingModel->getFromBackingStore(pName, currCycle);
+                                    started = true;
+                                    core->setScreen(process);
+                                    addRunning(process);
+                                }
                             }
+                            else { // not in backing store and new process
+                                // do oldest process move to backing
+                                std::string oldest = pagingModel->getOldestProcess();
+                                std::lock_guard<std::mutex> runningLock(runningMutex);
+                                if (isRunning(oldest))
+                                    preempt(oldest);
+                                pagingModel->moveToBackingStore(oldest);
+                                started = true;
+                                core->setScreen(process);
+                                addRunning(process);
+                            }
+                            // if (process->getMemLoc() == nullptr)
+                            //     process->setMemLoc(flatModel->allocate(process->getMemoryRequired(), process->getName()));
+                            // if (process->getMemLoc() != nullptr) {
+                            //     started = true;
+                            //     core->setScreen(process);
+                            //     std::lock_guard<std::mutex> runningLock(runningMutex);
+                            //     addRunning(process);
+                            // }
+                            // else {
+                            //     this->ready->push_back(process);
+                            // }
                         }
                     } catch (const std::exception& e) {
                         std::cout << e.what() << std::endl;
@@ -95,6 +135,9 @@ void Scheduler::run() {
                 }
                 // std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
+        }
+        if (started) {
+            cpu.work();
         }
         while (!this->cpu.allCyclesFinished()) {
             // wait
@@ -263,4 +306,36 @@ unsigned int Scheduler::getMaxIns() const {
 void Scheduler::setScreenLS() {
     this->screenLS = true;
 }
+
+std::vector<std::string> Scheduler::getRunningNames() {
+    std::lock_guard<std::mutex> runningLock(runningMutex);
+    std::vector<std::string> names;
+    for (int i = 0; i < running->size(); i++) {
+        names.push_back(running->at(i)->getName());
+    }
+    return names;
+}
+
+bool Scheduler::isRunning(std::string name) {
+    for (size_t i = 0; i < running->size(); i++) {
+        if (running->at(i)->getName() == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Scheduler::preempt(std::string name) {
+    for (size_t i = 0; i < cpu.getCores().size(); i++) {
+        std::shared_ptr<cpu::Core> core = cpu.getCores().at(i);
+        if (core->getState() == CoreState::BUSY) {
+            std::shared_ptr<screen::Screen> p = core->getCurrScreen();
+            if (p->getName() == name) {
+                core->preempt();
+                break;
+            }
+        }
+    }
+}
+
 

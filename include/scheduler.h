@@ -13,6 +13,7 @@ namespace scheduler {
         std::vector<std::shared_ptr<screen::Screen>>* running;
         std::vector<std::shared_ptr<screen::Screen>>* finished;
         std::shared_ptr<allocator::FlatModel> flatModel;
+        std::shared_ptr<allocator::Paging> pagingModel;
         unsigned int currCycle;
         unsigned int processFreq; // The frequency of generating processes in the "scheduler-test" command in CPU cycles. The range is [1, 2^32]. If one, a new process is generated at the end of each CPU cycle.
         unsigned int minIns; // The minimum instructions/command per process. The range is [1, 2^32].
@@ -46,6 +47,9 @@ namespace scheduler {
         unsigned int getMaxIns() const;
         std::string screenList();
         void setScreenLS();
+        std::vector<std::string> getRunningNames();
+        void preempt(std::string name);
+        bool isRunning(std::string name);
     };
 }
 #endif //SCHEDULER_H

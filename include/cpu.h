@@ -38,6 +38,7 @@ namespace cpu {
         bool isCycleFinished() const;
         void setCycleFinished(bool cycleFinished);
         void preempt();
+        std::shared_ptr<screen::Screen> getCurrScreen();
     };
 
     class CPU {

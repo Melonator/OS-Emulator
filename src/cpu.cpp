@@ -190,3 +190,6 @@ void Core::preempt() {
     remainingQuantum = quantum;
 }
 
+std::shared_ptr<screen::Screen> Core::getCurrScreen() {
+    return currScreen;
+}
