@@ -31,6 +31,8 @@ namespace screen {
         size_t getMemoryRequired() const;
         void setMemLoc(void* memLoc);
         void* getMemLoc() const;
+        void setDeallocated(bool deallocated);
+        bool isDeallocated() const;
     private:
         std::string name;
         std::string timestamp;
@@ -43,6 +45,7 @@ namespace screen {
         void *memLoc;
         std::string startTime;
         std::string endTime;
+        bool deallocated;
         std::string GetCommand();
         void ParseCommand(std::string& command, std::vector<std::string>& args, std::string input);
         bool IsValidCommand(std::string command);

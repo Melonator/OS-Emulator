@@ -35,6 +35,7 @@ using namespace screen;
         this->isVisible = true;
         this->memoryRequired = memoryRequired;
         this->memLoc = nullptr;
+        this->deallocated = false;
     }
     std::string Screen::getName() {
         return this->name;
@@ -227,4 +228,12 @@ using namespace screen;
 
     void* Screen::getMemLoc() const {
         return this->memLoc;
+    }
+
+    void Screen::setDeallocated(bool deallocated) {
+        this->deallocated = deallocated;
+    }
+
+    bool Screen::isDeallocated() const {
+        return this->deallocated;
     }
