@@ -156,12 +156,23 @@ void Scheduler::run() {
         if (started) {
             {
                 // deallocate memory when finished
-                std::lock_guard<std::mutex> finishedLock(finishedMutex);
-                for (int i = 0; i < finished->size(); i++) {
-                    std::shared_ptr<screen::Screen> p = finished->at(i);
-                    if (p != nullptr) {
-                        flatModel->deallocate(p->getMemLoc());
-                        p->setMemLoc(nullptr);
+                if (allocator == "paging") {
+                    std::lock_guard<std::mutex> finishedLock(finishedMutex);
+                    for (int i = 0; i < finished->size(); i++) {
+                        std::shared_ptr<screen::Screen> p = finished->at(i);
+                        if (p != nullptr) {
+                            pagingModel->deallocate(p->getName());
+                        }
+                    }
+                }
+                else {
+                    std::lock_guard<std::mutex> finishedLock(finishedMutex);
+                    for (int i = 0; i < finished->size(); i++) {
+                        std::shared_ptr<screen::Screen> p = finished->at(i);
+                        if (p != nullptr) {
+                            flatModel->deallocate(p->getMemLoc());
+                            p->setMemLoc(nullptr);
+                        }
                     }
                 }
             }
