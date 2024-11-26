@@ -29,7 +29,7 @@ namespace scheduler {
         bool screenLS;
         std::mutex runningMutex;
         std::mutex finishedMutex;
-
+        std::string allocator;
     public:
         std::mutex readyMutex;
         Scheduler();
