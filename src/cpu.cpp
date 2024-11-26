@@ -65,6 +65,12 @@ int CPU::getAvailableCores() {
     return available;
 }
 
+void CPU::work() {
+    for (int i = 0; i < numCores; i++) {
+        cores.at(i)->work();
+    }
+}
+
 Core::Core() {
 }
 

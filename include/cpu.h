@@ -55,6 +55,7 @@ namespace cpu {
         void setAllCyclesFinished(bool cycleFinished);
         float getUtilization();
         int getAvailableCores();
+        void work();
     };
 
 }
