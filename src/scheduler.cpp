@@ -17,7 +17,7 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
     std::ifstream file;
     file.open("../src/config.txt");
     std::string line;
-    std::string configs[10];
+    std::string configs[11];
     int i = 0;
     while (getline(file, line)) {
         char *ptr = strtok(line.data(), " ");
@@ -99,33 +99,74 @@ void Scheduler::run() {
                                     }
                                     else {
                                         // move oldest to backing
-                                        std::string oldest = pagingModel->getOldestProcess();
+                                        std::string oldest = pagingModel->getOldestProcessNotRunning(getRunningNames());
                                         std::lock_guard<std::mutex> runningLock(runningMutex);
                                         if (isRunning(oldest))
                                             preempt(oldest);
-                                        pagingModel->moveToBackingStore(oldest);
-                                        pagingModel->getFromBackingStore(pName, currCycle);
+                                        if (oldest != "" && quantum != 0) {
+                                            pagingModel->moveToBackingStore(oldest);
+                                            pagingModel->getFromBackingStore(pName, currCycle);
+                                            started = true;
+                                            core->setScreen(process);
+                                            addRunning(process);
+                                        }
+                                        else
+                                            ready->push_back(process);
+                                    }
+                                }
+                                else { // not in backing store and new process
+                                    if (!pagingModel->canAllocate(process->getMemoryRequired())) {
+                                        // do oldest process move to backing
+                                        std::string oldest = pagingModel->getOldestProcessNotRunning(getRunningNames());
+                                        // std::lock_guard<std::mutex> runningLock(runningMutex);
+                                        // if (isRunning(oldest))
+                                        //     preempt(oldest);
+                                        if (oldest != "" && quantum != 0) {
+                                            pagingModel->moveToBackingStore(oldest);
+                                            pagingModel->allocate(process->getMemoryRequired(), pName, currCycle);
+                                            started = true;
+                                            core->setScreen(process);
+                                            addRunning(process);
+                                        }
+                                        else
+                                            ready->push_back(process);
+                                    }
+                                    else {
+                                        pagingModel->allocate(process->getMemoryRequired(), pName, currCycle);
                                         started = true;
                                         core->setScreen(process);
                                         addRunning(process);
                                     }
                                 }
-                                else { // not in backing store and new process
-                                    // do oldest process move to backing
-                                    std::string oldest = pagingModel->getOldestProcess();
-                                    std::lock_guard<std::mutex> runningLock(runningMutex);
-                                    if (isRunning(oldest))
-                                        preempt(oldest);
-                                    pagingModel->moveToBackingStore(oldest);
-                                    started = true;
-                                    core->setScreen(process);
-                                    addRunning(process);
-                                }
                             }
                             else {
+                                std::string name = process->getName();
                                 if (process->getMemLoc() == nullptr) { // memory not allocated
                                     // check backing store
-                                    process->setMemLoc(flatModel->allocate(process->getMemoryRequired(), process->getName()));
+                                    if (flatModel->inBackingStore(name)) {
+                                        void *mem = flatModel->getFromBackingStore(name, currCycle);
+                                        if (mem != nullptr) {
+                                            process->setMemLoc(mem);
+                                        }
+                                        else { // not enough memory
+                                            std::string oldest = flatModel->getOldestProcessNotRunning(getRunningNames());
+                                            flatModel->moveToBackingStore(oldest);
+                                            // add logic to set oldest process memloc to nullptr
+                                            process->setMemLoc(flatModel->getFromBackingStore(name, currCycle));
+                                        }
+                                    }
+                                    else { // not in backing store
+                                        void *mem = flatModel->allocate(process->getMemoryRequired(), name, currCycle);
+                                        if (mem != nullptr) {
+                                            process->setMemLoc(mem);
+                                        }
+                                        else { // not enough memory
+                                            std::string oldest = flatModel->getOldestProcessNotRunning(getRunningNames());
+                                            flatModel->moveToBackingStore(oldest);
+                                            // add logic to set oldest process memloc to nullptr
+                                            process->setMemLoc(flatModel->allocate(process->getMemoryRequired(), name, currCycle));
+                                        }
+                                    }
                                 }
                                 if (process->getMemLoc() != nullptr) { // memory allocated
                                     started = true;
@@ -189,10 +230,10 @@ void Scheduler::run() {
             //     logFile.close();
             // }
 
-            if (screenLS) {
-                printList();
-                screenLS = false;
-            }
+            // if (screenLS) {
+            //     printList();
+            //     screenLS = false;
+            // }
             currCycle += 1;
             this->cpu.setAllCyclesFinished(false);
         }

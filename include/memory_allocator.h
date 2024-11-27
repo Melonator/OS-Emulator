@@ -23,10 +23,16 @@ namespace allocator {
         // virtual void* allocate(size_t size, const std::string &name) = 0;
         // virtual void deallocate(void* ptr) = 0;
         virtual std::string visualizeMemory() = 0;
-        void moveToBackingStore(std::string name);
-        void getFromBackingStore(std::string name);
+        virtual void moveToBackingStore(const std::string& name) = 0;
+        // void getFromBackingStore(std::string name);
+        // virtual bool canAllocate(size_t size);
+        virtual bool inBackingStore(std::string name) = 0;
+        // virtual bool isAllocated(std::string name);
+        virtual std::string getOldestProcessNotRunning(std::vector<std::string> running) = 0;
     protected:
-        size_t blockSize;
+        size_t blockSize = 0;
+        size_t maximumSize = 0;
+        size_t allocatedSize = 0;
     };
 
     class FlatModel : public IMemoryAllocator {
@@ -34,17 +40,21 @@ namespace allocator {
         FlatModel(size_t size, size_t blockSize);
         ~FlatModel();
 
-        void* allocate(size_t size, const std::string& name);
+        void* allocate(size_t size, const std::string& name, size_t entranceCycle);
         void deallocate(void* ptr);
         std::string visualizeMemory();
-        void moveToBackingStore(std::string name);
-        void getFromBackingStore(std::string name, size_t entranceCycle);
+        // bool canAllocate(size_t size);
+        bool inBackingStore(std::string name);
+        // bool isAllocated(std::string name);
+        std::string getOldestProcessNotRunning(std::vector<std::string> running);
+        void moveToBackingStore(const std::string& name);
+        void* getFromBackingStore(const std::string& name, size_t entranceCycle);
     private:
         size_t maximumSize;
         size_t allocatedSize;
         std::vector<char> memory;
         std::vector<AllocationRecord> allocations;
-        std::mutex allocatorMutex;
+        std::mutex allocatedMutex;
         std::vector<AllocationRecord> backingStore;
         std::mutex backingStoreMutex;
         void initializeMemory();
@@ -60,15 +70,15 @@ namespace allocator {
         ~Paging();
 
         void *allocate(size_t size, const std::string &name, size_t entranceCycle);
-        void deallocate(std::string name);
+        void deallocate(const std::string& name);
         std::string visualizeMemory();
         void initializeMemory();
-        void moveToBackingStore(std::string name);
-        void getFromBackingStore(std::string name, size_t entranceCycle);
+        void moveToBackingStore(const std::string& name);
+        void getFromBackingStore(const std::string& name, size_t entranceCycle);
         bool canAllocate(size_t size);
         bool inBackingStore(std::string name);
         bool isAllocated(std::string name);
-        std::string getOldestProcess();
+        std::string getOldestProcessNotRunning(std::vector<std::string> running);
     private:
         size_t maximumSize;
         size_t allocatedSize;

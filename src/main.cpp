@@ -184,7 +184,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
                     std::cout << dye::red("Too many arguments\n");
                     sameScreen = true;
                 } else {
-                    sched->setScreenLS();
+                    sched->printList();
                     sameScreen = true;
                 }
             } else {

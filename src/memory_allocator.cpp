@@ -18,14 +18,14 @@ FlatModel::~FlatModel() {
     memory.clear();
 }
 
-void *FlatModel::allocate(size_t size, const std::string& name) {
+void *FlatModel::allocate(size_t size, const std::string& name, size_t entranceCycle) {
     size_t requiredBlocks = (size + blockSize - 1) / blockSize;
     size_t totalBlocks = maximumSize / blockSize;
     for (size_t i = 0; i <= totalBlocks - requiredBlocks; ++i) {
         if (isBlockFree(i, requiredBlocks)) {
             // Add a new allocation record directly to allocations
-            std::lock_guard<std::mutex> lock(allocatorMutex);
-            allocations.push_back({i, requiredBlocks, name});
+            // std::lock_guard<std::mutex> lock(allocatedMutex);
+            allocations.push_back({i, requiredBlocks, name, entranceCycle});
             allocatedSize += size;
             return &memory[i * blockSize];
         }
@@ -38,7 +38,7 @@ void FlatModel::deallocate(void *ptr) {
     size_t startBlock = (static_cast<char*>(ptr) - &memory[0]) / blockSize;
 
     // Find the corresponding allocation record in allocations
-    std::lock_guard<std::mutex> lock(allocatorMutex);
+    // std::lock_guard<std::mutex> lock(allocatedMutex);
     auto it = std::find_if(allocations.begin(), allocations.end(),
         [startBlock](const AllocationRecord& record) {
             return record.startBlock == startBlock;
@@ -55,7 +55,7 @@ void FlatModel::deallocate(void *ptr) {
 }
 
 std::string FlatModel::visualizeMemory() {
-    std::lock_guard<std::mutex> lock(allocatorMutex);
+    // std::lock_guard<std::mutex> lock(allocatedMutex);
     const time_t timestamp = time(NULL);
     struct tm datetime = *localtime(&timestamp);
     char output[50] = "";
@@ -97,6 +97,7 @@ bool FlatModel::canAllocateAt(size_t index, size_t size) const {
 }
 
 bool FlatModel::isBlockFree(size_t startBlock, size_t numBlocks) const {
+    // checks if block from startBlock to startBlock + numBlocks is free
     for (size_t i = startBlock; i < startBlock + numBlocks; ++i) {
         // Check if any existing allocation overlaps with this block range
         if (std::any_of(allocations.begin(), allocations.end(),
@@ -109,14 +110,75 @@ bool FlatModel::isBlockFree(size_t startBlock, size_t numBlocks) const {
     return true; // Block is free
 }
 
-void FlatModel::moveToBackingStore(std::string name) {
-    std::lock_guard<std::mutex> lock(backingStoreMutex);
+void FlatModel::moveToBackingStore(const std::string& name) {
+    // std::lock_guard<std::mutex> lock(allocatedMutex);
 
+    for (auto it = allocations.begin(); it != allocations.end(); ++it) {
+        if (it->name == name) {
+            // std::lock_guard<std::mutex> backingLock(backingStoreMutex);
+            // Add allocation record to the backing store
+            backingStore.push_back(*it);
+
+            // Calculate the memory pointer for deallocation
+            void* ptr = &memory[it->startBlock * blockSize];
+
+            // Use deallocate to free the memory
+            deallocate(ptr);
+
+            return; // Exit after moving the desired allocation
+        }
+    }
 }
 
-void FlatModel::getFromBackingStore(std::string name) {
-    // move to allocations vector
+void *FlatModel::getFromBackingStore(const std::string& name, size_t entranceCycle) {
+    // std::lock_guard<std::mutex> lock(backingStoreMutex);
+    for (size_t i = 0; i < backingStore.size(); ++i) {
+        AllocationRecord record = backingStore[i];
+
+        if (record.name == name) {
+            // Try to allocate memory for this record
+            void* allocatedMemory = allocate(record.size * blockSize, name, entranceCycle);
+
+            if (allocatedMemory != nullptr) {
+                // Allocation successful, update the record with new entranceCycle
+                record.entranceCycle = entranceCycle;
+
+                // Add the record to the allocations vector
+                allocations.push_back(record);
+
+                // Remove from the backing store
+                backingStore.erase(backingStore.begin() + i);
+
+                return allocatedMemory; // Successfully moved back
+            }
+        }
+    }
+    return nullptr;
 }
+
+std::string FlatModel::getOldestProcessNotRunning(std::vector<std::string> running) {
+    // std::lock_guard<std::mutex> allocatedLock(allocatedMutex);
+    std::string oldest = "";
+    size_t minCycle = -1;
+    for (size_t i = 0; i < allocations.size(); i++) {
+        if (std::find(running.begin(), running.end(), allocations[i].name) == running.end() && allocations[i].entranceCycle < minCycle) {
+        // if (allocations[i].entranceCycle < minCycle) {
+            minCycle = allocations[i].entranceCycle;
+            oldest = allocations[i].name;
+        }
+    }
+    return oldest;
+}
+
+bool FlatModel::inBackingStore(std::string name) {
+    for (size_t i = 0; i < backingStore.size(); i++) {
+        if (backingStore[i].name == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 #pragma endregion FirstFit
 
@@ -150,6 +212,7 @@ void *Paging::allocate(size_t size, const std::string &name, size_t entranceCycl
         page.name = name;
         page.entranceCycle = entranceCycle;
         allocatedPages.push_back(page);
+        allocatedSize += pageSize;
         reqPages--;
     }
     return nullptr;
@@ -162,7 +225,7 @@ bool Paging::canAllocate(size_t size) {
 }
 
 
-void Paging::deallocate(std::string name) {
+void Paging::deallocate(const std::string& name) {
     std::lock_guard<std::mutex> allocatedLock(allocatedMutex);
     for (size_t i = 0; i < allocatedPages.size(); i++) {
         Page page = allocatedPages[i];
@@ -171,7 +234,7 @@ void Paging::deallocate(std::string name) {
                 std::lock_guard<std::mutex> freeLock(freeMutex);
                 freePages.push_back({page.index, "", 0});
             }
-            page.index = -1;
+            // page.index = 0;
             allocatedPages.erase(allocatedPages.begin() + i);
         }
     }
@@ -181,7 +244,7 @@ std::string Paging::visualizeMemory() {
     return "";
 }
 
-void Paging::moveToBackingStore(std::string name) {
+void Paging::moveToBackingStore(const std::string& name) {
     std::lock_guard<std::mutex> backingLock(backingStoreMutex);
     for (size_t i = 0; i < allocatedPages.size(); i++) {
         Page page = allocatedPages[i];
@@ -190,16 +253,18 @@ void Paging::moveToBackingStore(std::string name) {
                 std::lock_guard<std::mutex> freeLock(freeMutex);
                 freePages.push_back({page.index, "", 0});
             }
-            page.index = -1;
+            page.index = 0;
             backingStore.push_back(page);
             allocatedPages.erase(allocatedPages.begin() + i);
+            allocatedSize -= pageSize;
+            i--;
         }
     }
 }
 
-void Paging::getFromBackingStore(std::string name, size_t entranceCycle) {
+void Paging::getFromBackingStore(const std::string& name, size_t entranceCycle) {
     std::lock_guard<std::mutex> backingLock(backingStoreMutex);
-    for (size_t i = 0; i < backingStore; i++) {
+    for (size_t i = 0; i < backingStore.size(); i++) {
         Page page = backingStore[i];
         if (page.name == name) {
             std::lock_guard<std::mutex> freeLock(freeMutex);
@@ -233,12 +298,13 @@ bool Paging::isAllocated(std::string name) {
     return false;
 }
 
-std::string Paging::getOldestProcess() {
+std::string Paging::getOldestProcessNotRunning(std::vector<std::string> running) {
     std::lock_guard<std::mutex> allocatedLock(allocatedMutex);
     std::string oldest = "";
     size_t minCycle = -1;
     for (size_t i = 0; i < allocatedPages.size(); i++) {
-        if (allocatedPages[i].entranceCycle < minCycle) {
+        if (std::find(running.begin(), running.end(), allocatedPages[i].name) == running.end() && allocatedPages[i].entranceCycle < minCycle) {
+        // if (allocatedPages[i].entranceCycle < minCycle) {
             minCycle = allocatedPages[i].entranceCycle;
             oldest = allocatedPages[i].name;
         }

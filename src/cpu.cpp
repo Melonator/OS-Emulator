@@ -104,7 +104,7 @@ void Core::work() {
                 // std::cout << "CPU " << id << " doing work on " << currScreen->getName() << "\n";
 
                 // process finished
-                if (currScreen->isFinished()) {
+                else if (currScreen->isFinished()) {
                     {
                         std::lock_guard<std::mutex> runningLock(*runningMutex);
                         removeRunning(currScreen);
@@ -122,9 +122,9 @@ void Core::work() {
                 }
             }
         }
-        else
+        else if (currScreen != nullptr)
             currScreen->setState(ProcessState::WAITING);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         cycleFinished = true;
         // while (cycleFinished) {
         //     // wait here for cycle update
