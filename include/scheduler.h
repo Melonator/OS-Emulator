@@ -50,6 +50,7 @@ namespace scheduler {
         std::vector<std::string> getRunningNames();
         void preempt(std::string name);
         bool isRunning(std::string name);
+        void setMemLocNull(std::string name);
     };
 }
 #endif //SCHEDULER_H

@@ -152,6 +152,7 @@ void Scheduler::run() {
                                             std::string oldest = flatModel->getOldestProcessNotRunning(getRunningNames());
                                             flatModel->moveToBackingStore(oldest);
                                             // add logic to set oldest process memloc to nullptr
+                                            setMemLocNull(oldest);
                                             process->setMemLoc(flatModel->getFromBackingStore(name, currCycle));
                                         }
                                     }
@@ -164,6 +165,7 @@ void Scheduler::run() {
                                             std::string oldest = flatModel->getOldestProcessNotRunning(getRunningNames());
                                             flatModel->moveToBackingStore(oldest);
                                             // add logic to set oldest process memloc to nullptr
+                                            setMemLocNull(oldest);
                                             process->setMemLoc(flatModel->allocate(process->getMemoryRequired(), name, currCycle));
                                         }
                                     }
@@ -400,5 +402,15 @@ void Scheduler::preempt(std::string name) {
         }
     }
 }
+
+void Scheduler::setMemLocNull(std::string name) {
+    for (size_t i = 0; i < processes->size(); i++) {
+        if (processes->at(i)->getName() == name) {
+            processes->at(i)->setMemLoc(nullptr);
+            break;
+        }
+    }
+}
+
 
 
