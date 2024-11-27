@@ -36,7 +36,7 @@ void ParseCommand(std::string& command, std::vector<std::string>& args, const st
 }
 
 bool IsValidCommand(std::string const& command) {
-    std::string const valid_commands[7] = {"exit", "clear", "initialize", "screen", "scheduler-test", "scheduler-stop", "report-util"};
+    std::string const valid_commands[9] = {"exit", "clear", "initialize", "screen", "scheduler-test", "scheduler-stop", "report-util", "vmstat", "process-smi"};
 
     for(auto c: valid_commands) {
         if(c == command) {
@@ -210,6 +210,14 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
     else if (command == "report-util") {
         sched->saveList();
         std::cout << "Report generated to csopesy-log.txt\n";
+        sameScreen = true;
+    }
+    else if (command == "vmstat") {
+        // vmstat here
+        sameScreen = true;
+    }
+    else if (command == "process-smi") {
+        // process-smi here
         sameScreen = true;
     }
 }
