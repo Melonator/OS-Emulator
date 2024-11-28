@@ -87,6 +87,8 @@ std::string FlatModel::visualizeMemory() {
     result += std::to_string(maximumSize) + " K total memory\n";
     result += std::to_string(allocatedSize) + " K used memory\n";
     result += std::to_string(maximumSize - allocatedSize) + " K free memory\n.";
+    result += std::to_string(swapIn) + " total processes swapped in\n";
+    result += std::to_string(swapOut) + " total processes swapped out\n";
     return result;
 }
 
@@ -127,7 +129,7 @@ void FlatModel::moveToBackingStore(const std::string& name) {
 
             // Use deallocate to free the memory
             deallocate(ptr);
-
+            swapOut++;
             return; // Exit after moving the desired allocation
         }
     }
@@ -151,7 +153,7 @@ void *FlatModel::getFromBackingStore(const std::string& name, size_t entranceCyc
 
                 // Remove from the backing store
                 backingStore.erase(backingStore.begin() + i);
-
+                swapIn++;
                 return allocatedMemory; // Successfully moved back
             }
         }
@@ -186,6 +188,7 @@ std::string FlatModel::getUtil() {
     std::string util = "";
     util += "Memory Usage: " + std::to_string(allocatedSize) + "KB / " + std::to_string(maximumSize) + "KB\n";
     util += std::format("Memory Util: {0:.2f}%\n\n", ((float)allocatedSize / maximumSize) * 100);
+
     return util;
 }
 
@@ -267,8 +270,8 @@ std::string Paging::visualizeMemory() {
     result += std::to_string(maximumSize) + " K total memory\n";
     result += std::to_string(allocatedSize) + " K used memory\n";
     result += std::to_string(maximumSize - allocatedSize) + " K free memory\n.";
-    result += std::to_string(totalPagedIn) + " pages paged in\n";
-    result += std::to_string(totalPagedOut) + " pages paged out\n";
+    result += std::to_string(totalPagedIn) + " total paged in\n";
+    result += std::to_string(totalPagedOut) + " total paged out\n";
     return result;
 }
 

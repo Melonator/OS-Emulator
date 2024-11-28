@@ -64,6 +64,8 @@ namespace allocator {
         bool isBlockFree(size_t startBlock, size_t numBlocks) const;
         // void allocateAt(size_t index, size_t size);
         // void deallocateAt(size_t index);
+        size_t swapIn = 0;
+        size_t swapOut = 0;
     };
 
     class Paging : public IMemoryAllocator {
