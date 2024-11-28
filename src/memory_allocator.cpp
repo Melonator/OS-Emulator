@@ -56,34 +56,35 @@ void FlatModel::deallocate(void *ptr) {
 
 std::string FlatModel::visualizeMemory() {
     // std::lock_guard<std::mutex> lock(allocatedMutex);
-    const time_t timestamp = time(NULL);
-    struct tm datetime = *localtime(&timestamp);
-    char output[50] = "";
-    strftime(output, 50, "%m/%d/%Y, %I:%M:%S %p", &datetime);
-    const std::string timestampStr = output;
+    // const time_t timestamp = time(NULL);
+    // struct tm datetime = *localtime(&timestamp);
+    // char output[50] = "";
+    // strftime(output, 50, "%m/%d/%Y, %I:%M:%S %p", &datetime);
+    // const std::string timestampStr = output;
     std::string result = "";
-    // current timestamp
-    result += "Timestamp: " + timestampStr + "\n";
-    // number of processes in memory
-    result += "Number of processes in memory: " + std::to_string(allocations.size()) + "\n";
-    // total number of fragmentation in KB
-    result += "total number of fragmentation in KB: " + std::to_string(maximumSize - allocatedSize) + "\n";
-    result += "\n----end---- = " + std::to_string(maximumSize - 1) + "\n\n";
-
-    for (size_t i = maximumSize - 1;i --> 0 ;) {
-
-        for (size_t j = 0; j < allocations.size(); ++j) {
-            if (allocations[j].startBlock * blockSize == i) {
-                result +=  (std::to_string((allocations[j].startBlock + allocations[j].size) * blockSize - 1)) + "\n";
-                result += allocations[j].name + "\n";
-                result += (std::to_string(allocations[j].startBlock * blockSize)) + "\n\n";
-            }
-        }
-        // std:: cout << std::endl;
-    }
-    result += "\n----start---- = 0\n";
-    // return std::string(memory.begin(), memory.end());
-    // return "";
+    // // current timestamp
+    // result += "Timestamp: " + timestampStr + "\n";
+    // // number of processes in memory
+    // result += "Number of processes in memory: " + std::to_string(allocations.size()) + "\n";
+    // // total number of fragmentation in KB
+    // result += "total number of fragmentation in KB: " + std::to_string(maximumSize - allocatedSize) + "\n";
+    // result += "\n----end---- = " + std::to_string(maximumSize - 1) + "\n\n";
+    //
+    // for (size_t i = maximumSize - 1;i --> 0 ;) {
+    //
+    //     for (size_t j = 0; j < allocations.size(); ++j) {
+    //         if (allocations[j].startBlock * blockSize == i) {
+    //             result +=  (std::to_string((allocations[j].startBlock + allocations[j].size) * blockSize - 1)) + "\n";
+    //             result += allocations[j].name + "\n";
+    //             result += (std::to_string(allocations[j].startBlock * blockSize)) + "\n\n";
+    //         }
+    //     }
+    //     // std:: cout << std::endl;
+    // }
+    // result += "\n----start---- = 0\n";
+    result += maximumSize + " K total memory\n";
+    result += allocatedSize + " K used memory\n";
+    result += (maximumSize - allocatedSize) + " K free memory\n.";
     return result;
 }
 
@@ -245,7 +246,13 @@ void Paging::deallocate(const std::string& name) {
 }
 
 std::string Paging::visualizeMemory() {
-    return "";
+    std::string result = "";
+    result += maximumSize + " K total memory\n";
+    result += allocatedSize + " K used memory\n";
+    result += (maximumSize - allocatedSize) + " K free memory\n.";
+    result += totalPagedIn + " pages paged in\n";
+    result += totalPagedOut + " pages paged out\n";
+    return result;
 }
 
 void Paging::moveToBackingStore(const std::string& name) {

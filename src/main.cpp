@@ -214,6 +214,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
     }
     else if (command == "vmstat") {
         // vmstat here
+        sched->vmStat();
         sameScreen = true;
     }
     else if (command == "process-smi") {

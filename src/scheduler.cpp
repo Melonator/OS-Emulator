@@ -412,5 +412,28 @@ void Scheduler::setMemLocNull(std::string name) {
     }
 }
 
+void Scheduler::vmStat() {
+    std::string stats = "";
+    std::string memStats = "";
+    std::string extra = "";
+    if (allocator == "paging") {
+        memStats = pagingModel->visualizeMemory();
+        extra = memStats.substr(memStats.find('.'));
+        stats += extra;
+        extra = memStats.substr(memStats.find('.') + 1); // total page in total page out
+    }
+    else {
+        stats += flatModel->visualizeMemory();
+    }
+    // idle cpu ticks
+    stats += idleTicks + " idle CPU ticks\n";
+    // active cpu ticks
+    stats += activeTicks + " active CPU ticks\n";
+    // total ticks
+    stats += totalTicks + " total CPU ticks\n";
+    stats += extra;
+}
+
+
 
 
