@@ -304,6 +304,8 @@ void Paging::getFromBackingStore(const std::string& name, size_t entranceCycle) 
             allocatedPages.push_back(freePage);
             backingStore.erase(backingStore.begin() + i);
             totalPagedIn++;
+            allocatedSize += pageSize;
+            i--;
         }
     }
 }
@@ -358,8 +360,7 @@ std::string Paging::getUtil() {
 }
 
 void Paging::saveToFile() {
-    std::ofstream file;
-    file.open("backing-store.txt");
+    std::ofstream file("backing-store.txt");
     for (size_t i = 0; i < backingStore.size(); i++) {
         file << backingStore[i].name << " " << backingStore[i].index << " " << backingStore[i].entranceCycle << "\n";
     }
