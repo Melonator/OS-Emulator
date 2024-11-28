@@ -82,6 +82,7 @@ void schedulerThread(std::shared_ptr<scheduler::Scheduler>& sched) {
 
 void ProcessCommand(std::string const& command, const std::vector<std::string>&  args, std::vector<std::shared_ptr<screen::Screen>>* processes, std::shared_ptr<scheduler::Scheduler>& sched) {
     if (command == "exit") {
+        sched->saveBacking();
         exit(0);
     }
     if (command == "clear") {
