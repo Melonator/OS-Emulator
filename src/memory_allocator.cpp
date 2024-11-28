@@ -213,6 +213,7 @@ void *Paging::allocate(size_t size, const std::string &name, size_t entranceCycl
         page.entranceCycle = entranceCycle;
         allocatedPages.push_back(page);
         allocatedSize += pageSize;
+        totalPagedIn++;
         reqPages--;
     }
     return nullptr;
@@ -236,6 +237,9 @@ void Paging::deallocate(const std::string& name) {
             }
             // page.index = 0;
             allocatedPages.erase(allocatedPages.begin() + i);
+            allocatedSize -= pageSize;
+            i--;
+            totalPagedOut++;
         }
     }
 }
@@ -256,6 +260,7 @@ void Paging::moveToBackingStore(const std::string& name) {
             page.index = 0;
             backingStore.push_back(page);
             allocatedPages.erase(allocatedPages.begin() + i);
+            totalPagedOut++;
             allocatedSize -= pageSize;
             i--;
         }
@@ -274,6 +279,7 @@ void Paging::getFromBackingStore(const std::string& name, size_t entranceCycle) 
             freePage.entranceCycle = entranceCycle;
             allocatedPages.push_back(freePage);
             backingStore.erase(backingStore.begin() + i);
+            totalPagedIn++;
         }
     }
 }
@@ -310,6 +316,14 @@ std::string Paging::getOldestProcessNotRunning(std::vector<std::string> running)
         }
     }
     return oldest;
+}
+
+size_t Paging::getTotalIn() {
+    return totalPagedIn;
+}
+
+size_t Paging::getTotalOut() {
+    return totalPagedOut;
 }
 
 #pragma endregion Paging

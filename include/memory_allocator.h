@@ -50,8 +50,8 @@ namespace allocator {
         void moveToBackingStore(const std::string& name);
         void* getFromBackingStore(const std::string& name, size_t entranceCycle);
     private:
-        size_t maximumSize;
-        size_t allocatedSize;
+        // size_t maximumSize;
+        // size_t allocatedSize;
         std::vector<char> memory;
         std::vector<AllocationRecord> allocations;
         std::mutex allocatedMutex;
@@ -60,8 +60,8 @@ namespace allocator {
         void initializeMemory();
         bool canAllocateAt(size_t index, size_t size) const;
         bool isBlockFree(size_t startBlock, size_t numBlocks) const;
-        void allocateAt(size_t index, size_t size);
-        void deallocateAt(size_t index);
+        // void allocateAt(size_t index, size_t size);
+        // void deallocateAt(size_t index);
     };
 
     class Paging : public IMemoryAllocator {
@@ -79,9 +79,11 @@ namespace allocator {
         bool inBackingStore(std::string name);
         bool isAllocated(std::string name);
         std::string getOldestProcessNotRunning(std::vector<std::string> running);
+        size_t getTotalIn();
+        size_t getTotalOut();
     private:
-        size_t maximumSize;
-        size_t allocatedSize;
+        // size_t maximumSize;
+        // size_t allocatedSize;
         size_t pageSize;
         std::vector<char> memory;
         std::vector<Page> freePages;
@@ -90,6 +92,8 @@ namespace allocator {
         std::mutex freeMutex;
         std::mutex allocatedMutex;
         std::mutex backingStoreMutex;
+        size_t totalPagedIn = 0;
+        size_t totalPagedOut = 0;
     };
 }
 #endif //IMEMORY_ALLOCATOR_H
