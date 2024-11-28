@@ -416,22 +416,27 @@ void Scheduler::vmStat() {
     std::string stats = "";
     std::string memStats = "";
     std::string extra = "";
+    size_t totalTicks = cpu.getTotalTicks();
+    size_t idleTicks = cpu.getIdleTicks();
+    size_t activeTicks = cpu.getActiveTicks();
     if (allocator == "paging") {
         memStats = pagingModel->visualizeMemory();
-        extra = memStats.substr(memStats.find('.'));
+        extra = memStats.substr(0, memStats.find("."));
         stats += extra;
-        extra = memStats.substr(memStats.find('.') + 1); // total page in total page out
+        extra = memStats.substr(memStats.find(".") + 1); // total page in total page out
     }
     else {
         stats += flatModel->visualizeMemory();
     }
     // idle cpu ticks
-    stats += idleTicks + " idle CPU ticks\n";
+    stats += std::to_string(idleTicks) + " idle CPU ticks\n";
     // active cpu ticks
-    stats += activeTicks + " active CPU ticks\n";
+    stats += std::to_string(activeTicks) + " active CPU ticks\n";
     // total ticks
-    stats += totalTicks + " total CPU ticks\n";
+    stats += std::to_string(totalTicks) + " total CPU ticks\n";
     stats += extra;
+
+    std::cout << stats;
 }
 
 

@@ -7,6 +7,8 @@ void coreThread(const std::shared_ptr<Core> &core) {
     core->work();
 }
 
+#pragma region CPU
+
 CPU::CPU() {
 
 }
@@ -71,6 +73,34 @@ void CPU::work() {
     }
 }
 
+size_t CPU::getTotalTicks() {
+    size_t totalTicks = 0;
+    for (size_t i = 0; i < cores.size(); i++) {
+        totalTicks += cores.at(i)->getTotalTicks();
+    }
+    return totalTicks;
+}
+
+size_t CPU::getIdleTicks() {
+    size_t idleTicks = 0;
+    for (size_t i = 0; i < cores.size(); i++) {
+        idleTicks += cores.at(i)->getIdleTicks();
+    }
+    return idleTicks;
+}
+
+size_t CPU::getActiveTicks() {
+    size_t activeTicks = 0;
+    for (size_t i = 0; i < cores.size(); i++) {
+        activeTicks += cores.at(i)->getActiveTicks();
+    }
+    return activeTicks;
+}
+
+#pragma endregion CPU
+
+#pragma region Core
+
 Core::Core() {
 }
 
@@ -130,7 +160,18 @@ void Core::work() {
         //     // wait here for cycle update
         //     std::this_thread::sleep_for(std::chrono::milliseconds(10));
         // }
-        currCycle += 1;
+        if (state == CoreState::IDLE) {
+            std::lock_guard<std::mutex> idleLock(idleMutex);
+            idleTicks++;
+        }
+        else if (state == CoreState::BUSY) {
+            std::lock_guard<std::mutex> activeLock(activeMutex);
+            activeTicks++;
+        }
+        {
+            std::lock_guard<std::mutex> totalLock(totalMutex);
+            currCycle += 1;
+        }
         // break;
     // }
 }
@@ -193,3 +234,19 @@ void Core::preempt() {
 std::shared_ptr<screen::Screen> Core::getCurrScreen() {
     return currScreen;
 }
+
+size_t Core::getTotalTicks() {
+    std::lock_guard<std::mutex> totalLock(totalMutex);
+    return currCycle;
+}
+
+size_t Core::getIdleTicks() {
+    std::lock_guard<std::mutex> idleLock(idleMutex);
+    return idleTicks;
+}
+
+size_t Core::getActiveTicks() {
+    std::lock_guard<std::mutex> activeLock(activeMutex);
+    return activeTicks;
+}
+#pragma endregion Core

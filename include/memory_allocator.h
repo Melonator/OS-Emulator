@@ -50,8 +50,8 @@ namespace allocator {
         void moveToBackingStore(const std::string& name);
         void* getFromBackingStore(const std::string& name, size_t entranceCycle);
     private:
-        // size_t maximumSize;
-        // size_t allocatedSize;
+        size_t maximumSize;
+        size_t allocatedSize;
         std::vector<char> memory;
         std::vector<AllocationRecord> allocations;
         std::mutex allocatedMutex;
@@ -82,8 +82,8 @@ namespace allocator {
         size_t getTotalIn();
         size_t getTotalOut();
     private:
-        // size_t maximumSize;
-        // size_t allocatedSize;
+        size_t maximumSize;
+        size_t allocatedSize;
         size_t pageSize;
         std::vector<char> memory;
         std::vector<Page> freePages;

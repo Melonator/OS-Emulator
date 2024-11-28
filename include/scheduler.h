@@ -30,9 +30,6 @@ namespace scheduler {
         std::mutex runningMutex;
         std::mutex finishedMutex;
         std::string allocator;
-        size_t totalTicks;
-        size_t idleTicks;
-        size_t activeTicks;
     public:
         std::mutex readyMutex;
         Scheduler();

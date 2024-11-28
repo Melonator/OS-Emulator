@@ -25,6 +25,11 @@ namespace cpu {
         std::mutex* readyMutex;
         std::mutex* runningMutex;
         std::mutex* finishedMutex;
+        size_t idleTicks = 0;
+        size_t activeTicks = 0;
+        std::mutex totalMutex;
+        std::mutex activeMutex;
+        std::mutex idleMutex;
     public:
         Core();
         Core(int id, unsigned int quantum, unsigned int delay, std::mutex* readyMutex, std::mutex* runningMutex, std::mutex* finishedMutex, std::vector<std::shared_ptr<screen::Screen>>* ready, std::vector<std::shared_ptr<screen::Screen>> *running, std::vector<std::shared_ptr<screen::Screen>> *finished);
@@ -39,6 +44,9 @@ namespace cpu {
         void setCycleFinished(bool cycleFinished);
         void preempt();
         std::shared_ptr<screen::Screen> getCurrScreen();
+        size_t getTotalTicks();
+        size_t getIdleTicks();
+        size_t getActiveTicks();
     };
 
     class CPU {
@@ -57,6 +65,9 @@ namespace cpu {
         float getUtilization();
         int getAvailableCores();
         void work();
+        size_t getTotalTicks();
+        size_t getIdleTicks();
+        size_t getActiveTicks();
     };
 
 }

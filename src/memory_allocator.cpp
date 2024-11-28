@@ -82,9 +82,9 @@ std::string FlatModel::visualizeMemory() {
     //     // std:: cout << std::endl;
     // }
     // result += "\n----start---- = 0\n";
-    result += maximumSize + " K total memory\n";
-    result += allocatedSize + " K used memory\n";
-    result += (maximumSize - allocatedSize) + " K free memory\n.";
+    result += std::to_string(maximumSize) + " K total memory\n";
+    result += std::to_string(allocatedSize) + " K used memory\n";
+    result += std::to_string(maximumSize - allocatedSize) + " K free memory\n.";
     return result;
 }
 
@@ -247,11 +247,11 @@ void Paging::deallocate(const std::string& name) {
 
 std::string Paging::visualizeMemory() {
     std::string result = "";
-    result += maximumSize + " K total memory\n";
-    result += allocatedSize + " K used memory\n";
-    result += (maximumSize - allocatedSize) + " K free memory\n.";
-    result += totalPagedIn + " pages paged in\n";
-    result += totalPagedOut + " pages paged out\n";
+    result += std::to_string(maximumSize) + " K total memory\n";
+    result += std::to_string(allocatedSize) + " K used memory\n";
+    result += std::to_string(maximumSize - allocatedSize) + " K free memory\n.";
+    result += std::to_string(totalPagedIn) + " pages paged in\n";
+    result += std::to_string(totalPagedOut) + " pages paged out\n";
     return result;
 }
 
