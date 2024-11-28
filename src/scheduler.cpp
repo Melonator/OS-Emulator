@@ -439,6 +439,34 @@ void Scheduler::vmStat() {
     std::cout << stats;
 }
 
+void Scheduler::processSMI() {
+    std::string output = "";
+    output +=
+R"(-------------------------------------------
+| PROCESS-SMI V01.00 Driver Version: 01.00 |
+-------------------------------------------
+
+)";
+    output += std::format("CPU Util: {0:.2f}%\n", cpu.getUtilization() * 100);
+    if (allocator == "paging") {
+        output += pagingModel->getUtil();
+    }
+    else {
+        output += flatModel->getUtil();
+    }
+    output += "===========================================\n";
+    output += "Running processes and memory usage:\n";
+    output += "-------------------------------------------\n";
+    // running processes here
+    {
+        std::lock_guard<std::mutex> runningLock(runningMutex);
+        for (size_t i = 0; i < running->size(); i++) {
+            output += running->at(i)->getName() + " " + std::to_string(running->at(i)->getMemoryRequired()) + "KB\n";
+        }
+    }
+    output += "-------------------------------------------\n";
+    std::cout << output;
+}
 
 
 

@@ -64,6 +64,7 @@ namespace cpu {
         void setAllCyclesFinished(bool cycleFinished);
         float getUtilization();
         int getAvailableCores();
+        int getNumCores();
         void work();
         size_t getTotalTicks();
         size_t getIdleTicks();

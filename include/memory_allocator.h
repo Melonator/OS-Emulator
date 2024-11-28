@@ -49,6 +49,7 @@ namespace allocator {
         std::string getOldestProcessNotRunning(std::vector<std::string> running);
         void moveToBackingStore(const std::string& name);
         void* getFromBackingStore(const std::string& name, size_t entranceCycle);
+        std::string getUtil();
     private:
         size_t maximumSize;
         size_t allocatedSize;
@@ -81,6 +82,7 @@ namespace allocator {
         std::string getOldestProcessNotRunning(std::vector<std::string> running);
         size_t getTotalIn();
         size_t getTotalOut();
+        std::string getUtil();
     private:
         size_t maximumSize;
         size_t allocatedSize;

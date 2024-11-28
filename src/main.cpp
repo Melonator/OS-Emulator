@@ -219,6 +219,7 @@ void ProcessCommand(std::string const& command, const std::vector<std::string>& 
     }
     else if (command == "process-smi") {
         // process-smi here
+        sched->processSMI();
         sameScreen = true;
     }
 }

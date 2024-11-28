@@ -52,6 +52,7 @@ namespace scheduler {
         bool isRunning(std::string name);
         void setMemLocNull(std::string name);
         void vmStat();
+        void processSMI();
     };
 }
 #endif //SCHEDULER_H

@@ -1,6 +1,7 @@
 #include "../include/memory_allocator.h"
 
 #include <algorithm>
+#include <format>
 #include <iostream>
 #include <mutex>
 
@@ -180,7 +181,12 @@ bool FlatModel::inBackingStore(std::string name) {
     return false;
 }
 
-
+std::string FlatModel::getUtil() {
+    std::string util = "";
+    util += "Memory Usage: " + std::to_string(allocatedSize) + "KB / " + std::to_string(maximumSize) + "KB\n";
+    util += std::format("Memory Util: {0:.2f}%\n\n", ((float)allocatedSize / maximumSize) * 100);
+    return util;
+}
 #pragma endregion FirstFit
 
 #pragma region Paging
@@ -333,6 +339,12 @@ size_t Paging::getTotalOut() {
     return totalPagedOut;
 }
 
+std::string Paging::getUtil() {
+    std::string util = "";
+    util += "Memory Usage: " + std::to_string(allocatedSize) + "KB / " + std::to_string(maximumSize) + "KB\n";
+    util += std::format("Memory Util: {0:.2f}%\n\n", ((float)allocatedSize / maximumSize) * 100);
+    return util;
+}
 #pragma endregion Paging
 
 

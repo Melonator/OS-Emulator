@@ -97,6 +97,11 @@ size_t CPU::getActiveTicks() {
     return activeTicks;
 }
 
+int CPU::getNumCores() {
+    return numCores;
+}
+
+
 #pragma endregion CPU
 
 #pragma region Core
