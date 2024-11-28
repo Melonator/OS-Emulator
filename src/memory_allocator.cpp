@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <format>
+#include <fstream>
 #include <iostream>
 #include <mutex>
 
@@ -187,6 +188,16 @@ std::string FlatModel::getUtil() {
     util += std::format("Memory Util: {0:.2f}%\n\n", ((float)allocatedSize / maximumSize) * 100);
     return util;
 }
+
+void FlatModel::saveToFile() {
+    std::ofstream file;
+    file.open("backing-store.txt");
+    for (size_t i = 0; i < backingStore.size(); i++) {
+        file << backingStore[i].name << " " << backingStore[i].size << " " << backingStore[i].entranceCycle << "\n";
+    }
+    file.close();
+}
+
 #pragma endregion FirstFit
 
 #pragma region Paging
@@ -345,6 +356,16 @@ std::string Paging::getUtil() {
     util += std::format("Memory Util: {0:.2f}%\n\n", ((float)allocatedSize / maximumSize) * 100);
     return util;
 }
+
+void Paging::saveToFile() {
+    std::ofstream file;
+    file.open("backing-store.txt");
+    for (size_t i = 0; i < backingStore.size(); i++) {
+        file << backingStore[i].name << " " << backingStore[i].index << " " << backingStore[i].entranceCycle << "\n";
+    }
+    file.close();
+}
+
 #pragma endregion Paging
 
 

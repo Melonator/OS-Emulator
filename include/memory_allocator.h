@@ -50,6 +50,7 @@ namespace allocator {
         void moveToBackingStore(const std::string& name);
         void* getFromBackingStore(const std::string& name, size_t entranceCycle);
         std::string getUtil();
+        void saveToFile();
     private:
         size_t maximumSize;
         size_t allocatedSize;
@@ -83,6 +84,7 @@ namespace allocator {
         size_t getTotalIn();
         size_t getTotalOut();
         std::string getUtil();
+        void saveToFile();
     private:
         size_t maximumSize;
         size_t allocatedSize;

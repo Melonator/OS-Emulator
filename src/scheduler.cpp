@@ -468,5 +468,12 @@ R"(-------------------------------------------
     std::cout << output;
 }
 
+void Scheduler::saveBacking() {
+    if (allocator == "paging")
+        pagingModel->saveToFile();
+    else
+        flatModel->saveToFile();
+}
+
 
 
