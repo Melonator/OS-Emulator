@@ -423,10 +423,13 @@ void Scheduler::vmStat() {
         memStats = pagingModel->visualizeMemory();
         extra = memStats.substr(0, memStats.find("."));
         stats += extra;
-        extra = memStats.substr(memStats.find(".") + 1); // total page in total page out
+        extra = memStats.substr(memStats.find(".") + 1);
     }
     else {
-        stats += flatModel->visualizeMemory();
+        memStats += flatModel->visualizeMemory();
+        extra = memStats.substr(0, memStats.find("."));
+        stats += extra;
+        extra = memStats.substr(memStats.find(".") + 1);
     }
     // idle cpu ticks
     stats += std::to_string(idleTicks) + " idle CPU ticks\n";
