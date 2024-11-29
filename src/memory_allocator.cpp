@@ -196,6 +196,7 @@ void *Paging::allocate(size_t size, const std::string &name, size_t entranceCycl
     size_t reqPages = (size + pageSize - 1) / pageSize;
     std::lock_guard<std::mutex> freeLock(freeMutex);
     std::lock_guard<std::mutex> allocatedLock(allocatedMutex);
+    size_t temp = reqPages;
     while (reqPages != 0) {
         Page page = freePages.front();
         freePages.erase(freePages.begin());
@@ -203,6 +204,9 @@ void *Paging::allocate(size_t size, const std::string &name, size_t entranceCycl
         page.entranceCycle = entranceCycle;
         allocatedPages.push_back(page);
         allocatedSize += pageSize;
+        if (allocatedSize > maximumSize) {
+            return nullptr;
+        }
         totalPagedIn++;
         reqPages--;
     }
@@ -246,6 +250,7 @@ std::string Paging::visualizeMemory() {
 
 void Paging::moveToBackingStore(const std::string& name) {
     std::lock_guard<std::mutex> backingLock(backingStoreMutex);
+    std::lock_guard<std::mutex> allocatedLock(allocatedMutex);
     for (size_t i = 0; i < allocatedPages.size(); i++) {
         Page page = allocatedPages[i];
         if (page.name == name) {
@@ -277,6 +282,9 @@ void Paging::getFromBackingStore(const std::string& name, size_t entranceCycle) 
             backingStore.erase(backingStore.begin() + i);
             totalPagedIn++;
             allocatedSize += pageSize;
+            if (allocatedSize > maximumSize) {
+                return;
+            }
             i--;
         }
     }

@@ -121,14 +121,14 @@ void Scheduler::run() {
                                         // std::lock_guard<std::mutex> runningLock(runningMutex);
                                         // if (isRunning(oldest))
                                         //     preempt(oldest);
-                                        if (oldest != "" && quantum != 0) {
+                                        if (oldest != "" && quantum != 0 && pagingModel->canAllocate(process->getMemoryRequired())) {
                                             pagingModel->moveToBackingStore(oldest);
                                             pagingModel->allocate(process->getMemoryRequired(), pName, currCycle);
                                             started = true;
                                             core->setScreen(process);
                                             addRunning(process);
                                         }
-                                        else
+                                        else if (oldest == "")
                                             ready->push_back(process);
                                     }
                                     else {
@@ -163,10 +163,14 @@ void Scheduler::run() {
                                         }
                                         else { // not enough memory
                                             std::string oldest = flatModel->getOldestProcessNotRunning(getRunningNames());
-                                            flatModel->moveToBackingStore(oldest);
-                                            // add logic to set oldest process memloc to nullptr
-                                            setMemLocNull(oldest);
-                                            process->setMemLoc(flatModel->allocate(process->getMemoryRequired(), name, currCycle));
+                                            if (oldest != "") {
+                                                flatModel->moveToBackingStore(oldest);
+                                                // add logic to set oldest process memloc to nullptr
+                                                setMemLocNull(oldest);
+                                                process->setMemLoc(flatModel->allocate(process->getMemoryRequired(), name, currCycle));
+                                            }
+                                            else
+                                                ready->push_back(process);
                                         }
                                     }
                                 }
