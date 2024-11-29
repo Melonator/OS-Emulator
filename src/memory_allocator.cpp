@@ -21,15 +21,15 @@ FlatModel::~FlatModel() {
 }
 
 void *FlatModel::allocate(size_t size, const std::string& name, size_t entranceCycle) {
-    size_t requiredBlocks = (size + blockSize - 1) / blockSize;
-    size_t totalBlocks = maximumSize / blockSize;
-    for (size_t i = 0; i <= totalBlocks - requiredBlocks; ++i) {
-        if (isBlockFree(i, requiredBlocks)) {
+    // size_t requiredBlocks = (size + blockSize - 1) / blockSize;
+    // size_t totalBlocks = maximumSize / blockSize;
+    for (size_t i = 0; i <= maximumSize - size; ++i) {
+        if (isBlockFree(i, size)) {
             // Add a new allocation record directly to allocations
             // std::lock_guard<std::mutex> lock(allocatedMutex);
-            allocations.push_back({i, requiredBlocks, name, entranceCycle});
+            allocations.push_back({i, size, name, entranceCycle});
             allocatedSize += size;
-            return &memory[i * blockSize];
+            return &memory[i];
         }
     }
 
