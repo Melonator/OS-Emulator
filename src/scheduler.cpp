@@ -40,7 +40,7 @@ Scheduler::Scheduler(std::vector<std::shared_ptr<screen::Screen>>* processes) {
 
     size_t minMem = std::stol(configs[9]);
     size_t maxMem = std::stol(configs[10]);
-    if (maxMem == blockSize)
+    if (memory == blockSize)
         allocator = "flat";
     else
         allocator = "paging";

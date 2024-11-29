@@ -8,7 +8,7 @@
 namespace allocator {
     struct AllocationRecord {
         size_t startBlock; // Starting block index of the allocation
-        size_t size;       // Size of the allocation in bytes or blocks
+        size_t size;       // Size of the allocation in bytes
         std::string name;  // Name of process that owns the allocation
         size_t entranceCycle = 0;
     };

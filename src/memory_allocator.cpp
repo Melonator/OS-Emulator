@@ -37,7 +37,7 @@ void *FlatModel::allocate(size_t size, const std::string& name, size_t entranceC
 }
 
 void FlatModel::deallocate(void *ptr) {
-    size_t startBlock = (static_cast<char*>(ptr) - &memory[0]) / blockSize;
+    size_t startBlock = (static_cast<char*>(ptr) - &memory[0]);
 
     // Find the corresponding allocation record in allocations
     // std::lock_guard<std::mutex> lock(allocatedMutex);
@@ -47,7 +47,7 @@ void FlatModel::deallocate(void *ptr) {
         });
 
     if (it != allocations.end()) {
-        allocatedSize -= it->size * blockSize;
+        allocatedSize -= it->size;
         // Remove the allocation record from allocations
         allocations.erase(it);
     }
@@ -57,33 +57,7 @@ void FlatModel::deallocate(void *ptr) {
 }
 
 std::string FlatModel::visualizeMemory() {
-    // std::lock_guard<std::mutex> lock(allocatedMutex);
-    // const time_t timestamp = time(NULL);
-    // struct tm datetime = *localtime(&timestamp);
-    // char output[50] = "";
-    // strftime(output, 50, "%m/%d/%Y, %I:%M:%S %p", &datetime);
-    // const std::string timestampStr = output;
     std::string result = "";
-    // // current timestamp
-    // result += "Timestamp: " + timestampStr + "\n";
-    // // number of processes in memory
-    // result += "Number of processes in memory: " + std::to_string(allocations.size()) + "\n";
-    // // total number of fragmentation in KB
-    // result += "total number of fragmentation in KB: " + std::to_string(maximumSize - allocatedSize) + "\n";
-    // result += "\n----end---- = " + std::to_string(maximumSize - 1) + "\n\n";
-    //
-    // for (size_t i = maximumSize - 1;i --> 0 ;) {
-    //
-    //     for (size_t j = 0; j < allocations.size(); ++j) {
-    //         if (allocations[j].startBlock * blockSize == i) {
-    //             result +=  (std::to_string((allocations[j].startBlock + allocations[j].size) * blockSize - 1)) + "\n";
-    //             result += allocations[j].name + "\n";
-    //             result += (std::to_string(allocations[j].startBlock * blockSize)) + "\n\n";
-    //         }
-    //     }
-    //     // std:: cout << std::endl;
-    // }
-    // result += "\n----start---- = 0\n";
     result += std::to_string(maximumSize) + " K total memory\n";
     result += std::to_string(allocatedSize) + " K used memory\n";
     result += std::to_string(maximumSize - allocatedSize) + " K free memory\n.";
@@ -125,7 +99,7 @@ void FlatModel::moveToBackingStore(const std::string& name) {
             backingStore.push_back(*it);
 
             // Calculate the memory pointer for deallocation
-            void* ptr = &memory[it->startBlock * blockSize];
+            void* ptr = &memory[it->startBlock];
 
             // Use deallocate to free the memory
             deallocate(ptr);
@@ -142,14 +116,9 @@ void *FlatModel::getFromBackingStore(const std::string& name, size_t entranceCyc
 
         if (record.name == name) {
             // Try to allocate memory for this record
-            void* allocatedMemory = allocate(record.size * blockSize, name, entranceCycle);
+            void* allocatedMemory = allocate(record.size, name, entranceCycle);
 
             if (allocatedMemory != nullptr) {
-                // Allocation successful, update the record with new entranceCycle
-                record.entranceCycle = entranceCycle;
-
-                // Add the record to the allocations vector
-                allocations.push_back(record);
 
                 // Remove from the backing store
                 backingStore.erase(backingStore.begin() + i);
